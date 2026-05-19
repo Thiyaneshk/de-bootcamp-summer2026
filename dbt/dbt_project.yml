@@ -1,0 +1,26 @@
+name: 'de_bootcamp'
+version: '1.0.0'
+config-version: 2
+
+profile: 'de_bootcamp'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+data-paths: ["data"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  de_bootcamp:
+    staging:
+      materialized: view
+      schema: staging
+    marts:
+      materialized: table
+      schema: marts

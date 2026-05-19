@@ -1,0 +1,18 @@
+de_bootcamp:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '../data/app.duckdb'
+      schema: main
+      threads: 4
+
+    prod:
+      type: postgres
+      host: localhost
+      user: postgres
+      password: postgres
+      port: 5432
+      dbname: stocks
+      schema: public
+      threads: 4

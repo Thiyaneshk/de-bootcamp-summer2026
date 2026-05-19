@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_prices
+    description: Cleaned and standardized price data
+    columns:
+      - name: symbol
+        description: Stock symbol
+      - name: timestamp
+        description: Price timestamp
+      - name: open
+        description: Opening price
+      - name: high
+        description: Highest price
+      - name: low
+        description: Lowest price
+      - name: close
+        description: Closing price
+      - name: volume
+        description: Trading volume
+      - name: pct_change
+        description: Daily percentage change

@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "de-bootcamp-summer2026"
+version = "0.0.1"
+description = "Learning project: yfinance → Streamlit → Airflow → PostgreSQL → dbt → LLM/RAG"
+authors = [
+    { name = "Your Name", email = "you@example.com" }
+]
+requires-python = ">=3.11"
+
+# Phase 0: Core dependencies
+dependencies = [
+    "python-dotenv>=1.0.0",
+    "toml>=0.10.2",
+]
+
+[project.optional-dependencies]
+# Phase 1: Streamlit UI + yfinance data loading
+phase1 = [
+    "streamlit>=1.40.0",
+    "plotly>=6.6.0",
+    "yfinance>=0.2.40",
+    "duckdb>=1.0.0",
+    "sqlalchemy>=2.0.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+]
+
+# Phase 2: Airflow orchestration + PostgreSQL
+phase2 = [
+    "apache-airflow>=2.10.2",
+    "psycopg2-binary>=2.9.0",
+    "apache-airflow-providers-postgres>=5.0.0",
+]
+
+# Phase 3: dbt transformations
+phase3 = [
+    "dbt-core>=1.9.0",
+    "dbt-postgres>=1.0.0",
+    "dbt-duckdb>=1.9.0",
+]
+
+# Phase 5: LLM + RAG (optional)
+phase5 = [
+    "ollama>=0.1.0",
+    "langchain>=0.1.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+# All dependencies (for Docker)
+all = [
+    "de-bootcamp-summer2026[phase1,phase2,phase3,phase5,dev]"
+]
+
+[tool.setuptools]
+packages = ["app", "scripts", "tests"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"

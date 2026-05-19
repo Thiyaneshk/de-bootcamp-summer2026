@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Project-specific
+data/app.duckdb
+data/app.duckdb.wal
+.dbt/
+dbt_packages/
+logs/
+
+# Environment
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Airflow
+airflow/logs/
+airflow/dags/__pycache__/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ollama
+ollama_models/

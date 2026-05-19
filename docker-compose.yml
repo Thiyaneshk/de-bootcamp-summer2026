@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # Phase 2: PostgreSQL data warehouse for Airflow and production data storage
+  postgres:
+    image: postgres:15
+    container_name: de-bootcamp-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stocks
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Phase 5: Ollama for local LLM models (optional)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: de-bootcamp-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+    # Uncomment to run Ollama only when explicitly started
+    # profiles:
+    #   - phase5
+
+  # Streamlit app
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: de-bootcamp-streamlit
+    environment:
+      - POSTGRES_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/stocks
+      - DUCKDB_PATH=/app/data/app.duckdb
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: streamlit run app/main.py --server.port=8501
+
+volumes:
+  postgres_data:
+  ollama_data:

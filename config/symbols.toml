@@ -1,0 +1,24 @@
+# Market Symbols Configuration
+# Add/remove symbols to customize what data is tracked
+
+[default]
+# Primary symbols to track
+symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "BTC-USD"]
+
+# yfinance parameters
+interval = "5m"          # Interval: 1m, 5m, 15m, 30m, 60m, 1h, 1d, 1wk, 1mo
+period = "5d"            # Period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+warmup_period = "60d"    # Additional historical data for indicators
+
+[us_stocks]
+symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN", "META", "NVDA", "JPM"]
+
+[crypto]
+symbols = ["BTC-USD", "ETH-USD", "XRP-USD"]
+
+[international]
+symbols = ["ASIANPAINT.NS", "RELIANCE.NS", "TCS.NS"]  # India
+symbols = ["0001.HK", "0700.HK", "3333.HK"]           # Hong Kong
+
+[indexes]
+symbols = ["^GSPC", "^IXIC", "^DJI", "^VIX"]
