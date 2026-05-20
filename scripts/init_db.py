@@ -18,24 +18,22 @@ Usage:
 
 import os
 import logging
+from app.db.connection import get_db_engine
+from app.db.utils import create_prices_table
 
 
 def init_database():
     """Initialize PostgreSQL database schema."""
-    # TODO: Get database URL from environment
-    # postgres_url = os.getenv('POSTGRES_URL')
-    
-    # TODO: Connect to PostgreSQL
-    # conn = create_engine(postgres_url)
-    
-    # TODO: Create tables
-    # SQL statements for:
-    # - CREATE TABLE prices (...)
-    # - CREATE TABLE watchlist (...)
-    # - CREATE TABLE trading_signals (...)
-    # - CREATE INDEXES
-    
-    logging.info("Database initialization complete")
+    logging.info('Initializing database schema')
+    # Create tables using DB engine
+    with get_db_engine() as engine:
+        try:
+            create_prices_table(engine)
+            logging.info('Created or verified prices table')
+        except Exception as e:
+            logging.exception('Failed to create prices table: %s', e)
+
+    logging.info('Database initialization complete')
 
 
 if __name__ == '__main__':

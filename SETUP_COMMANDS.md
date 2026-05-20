@@ -104,6 +104,15 @@ print(data.head())
 
 **Expected:** Should print AAPL price data with 5-minute intervals.
 
+### Step 1.1b: Test daily data loading (new)
+
+```bash
+# Quick test for daily OHLCV data using the ETL helper
+uv run python -c "from app.core.etl.prices import load_prices_daily; df=load_prices_daily('AAPL', period='1mo'); print(f'Downloaded {len(df)} rows'); print(df.tail())"
+```
+
+**Expected:** Should print daily OHLCV rows for the requested period. This project exposes `load_prices_daily()` and `load_prices_5m()` in `app/core/etl/prices.py` for programmatic and batch use.
+
 ### Step 1.2: Verify DuckDB Setup
 
 ```bash
@@ -136,6 +145,8 @@ uv run streamlit run app/main.py
 - Streamlit server starts on port 8501
 - Browser opens to `http://localhost:8501`
 - Home page loads (even if empty - it's a scaffold!)
+
+**Stock Overview (Daily data):** Use the `Stock Overview` page in the sidebar, enter a symbol and date range and click `Load` to view daily OHLCV and a candlestick chart. The view calls `app.core.etl.prices.load_prices_daily()` under the hood.
 
 ### Step 1.4: Test Data Loading & Storage
 
@@ -214,6 +225,19 @@ docker exec -it de-bootcamp-postgres psql -U postgres -d stocks -c "SELECT versi
 ```
 
 **Expected:** PostgreSQL version 15 info should be displayed.
+
+### Step 2.3b: Initialize DB schema (create prices table)
+
+```bash
+# Ensure Postgres is reachable from host or set POSTGRES_URL accordingly
+# Example (when running Postgres via Docker on localhost):
+export POSTGRES_URL="postgresql+psycopg2://postgres:postgres@localhost:5432/stocks"
+
+# Initialize database schema (creates `prices` table)
+uv run python scripts/init_db.py
+```
+
+**Expected:** The `prices` table will be created (or verified) in the configured database.
 
 ### Step 2.3: Initialize PostgreSQL Schema
 
@@ -313,6 +337,21 @@ docker exec -it de-bootcamp-postgres psql -U postgres -d stocks -c "SELECT COUNT
 ```
 
 **Phase 2 Checkpoint:** ✅ PostgreSQL running, Airflow DAGs execute, data flows into database
+
+### Manual ETL: Refresh / Upsert data (local)
+
+Use the manual refresh script to download daily OHLCV and upsert into the configured DB. The script will insert new rows and update existing ones (Postgres uses `ON CONFLICT` upsert).
+
+```bash
+# Refresh specific symbols (comma-separated)
+export POSTGRES_URL="postgresql+psycopg2://postgres:postgres@localhost:5432/stocks"
+uv run python -m scripts.refresh_data --symbols AAPL,MSFT
+
+# Or refresh all symbols from config
+uv run python -m scripts.refresh_data --all
+```
+
+**Note:** When running inside Docker (e.g., using the `streamlit` service), the `POSTGRES_URL` is already set to point at the `postgres` service. From host, set `POSTGRES_URL` to `postgresql+psycopg2://postgres:postgres@localhost:5432/stocks` before running the init or refresh scripts.
 
 ---
 
