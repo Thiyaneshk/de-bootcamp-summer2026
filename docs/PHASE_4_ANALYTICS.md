@@ -1,5 +1,7 @@
 # Phase 4: Analytics & Dashboards
 
+> 📊 **Implementation Status:** See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current progress and pending tasks.
+
 ## Overview
 
 Phase 4 teaches you how to:

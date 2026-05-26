@@ -150,6 +150,8 @@ de-bootcamp-summer2026/
 
 ## 📖 Documentation
 
+> **📊 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)** — **START HERE!** Current implementation progress, completion percentages, and pending tasks across all phases. Updated regularly to track progress.
+
 - **[SETUP_COMMANDS.md](SETUP_COMMANDS.md)** — Every command from repo creation through Phase 5
 - **[docs/PHASE_1_STREAMLIT.md](docs/PHASE_1_STREAMLIT.md)** — yfinance API, DuckDB storage
 - **[docs/PHASE_2_AIRFLOW_POSTGRES.md](docs/PHASE_2_AIRFLOW_POSTGRES.md)** — DAG structure, schema design

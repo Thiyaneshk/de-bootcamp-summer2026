@@ -1,5 +1,7 @@
 # Phase 3: dbt Data Transformations
 
+> 📊 **Implementation Status:** See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current progress and pending tasks.
+
 ## Overview
 
 Phase 3 teaches you how to:

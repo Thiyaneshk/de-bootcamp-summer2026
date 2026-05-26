@@ -1,5 +1,7 @@
 # Phase 2: Apache Airflow + PostgreSQL
 
+> 📊 **Implementation Status:** See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current progress and pending tasks.
+
 ## Overview
 
 Phase 2 teaches you how to:

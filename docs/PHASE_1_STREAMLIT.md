@@ -1,5 +1,7 @@
 # Phase 1: Streamlit + yfinance
 
+> 📊 **Implementation Status:** See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current progress and pending tasks.
+
 ## Overview
 
 Phase 1 teaches you how to:
