@@ -11,6 +11,7 @@ TODO: Implement utilities:
 """
 
 from sqlalchemy import text
+import pandas as pd
 
 
 def create_prices_table(connection) -> None:
@@ -222,3 +223,80 @@ def get_latest_prices(connection, symbol: str, limit: int = 100) -> list[dict]:
             return [dict(zip(['symbol','timestamp','open','high','low','close','volume'], r)) for r in res]
         except Exception:
             return []
+
+
+def get_available_symbols(connection) -> list[str]:
+    """
+    Get list of distinct symbols available in the database.
+    
+    Args:
+        connection: Database connection
+    
+    Returns:
+        List of unique stock symbols
+    """
+    try:
+        # Try SQLAlchemy engine first
+        if hasattr(connection, 'connect'):
+            with connection.connect() as conn:
+                result = conn.execute(text("SELECT DISTINCT symbol FROM prices ORDER BY symbol"))
+                return [row[0] for row in result.fetchall()]
+        # Try SQLAlchemy connection
+        elif hasattr(connection, 'execute'):
+            result = connection.execute(text("SELECT DISTINCT symbol FROM prices ORDER BY symbol"))
+            return [row[0] for row in result.fetchall()]
+    except Exception:
+        pass
+    
+    # duckdb fallback
+    try:
+        result = connection.execute("SELECT DISTINCT symbol FROM prices ORDER BY symbol").fetchall()
+        return [row[0] for row in result]
+    except Exception:
+        return []
+
+
+def get_symbol_data_as_dataframe(connection, symbol: str, limit: int = 5) -> pd.DataFrame:
+    """
+    Get price data for a symbol as a pandas DataFrame.
+    
+    Args:
+        connection: Database connection
+        symbol: Stock symbol
+        limit: Maximum rows to return (ordered by date DESC)
+    
+    Returns:
+        DataFrame with columns: symbol, timestamp, open, high, low, close, volume
+    """
+    try:
+        # Try SQLAlchemy engine first
+        if hasattr(connection, 'connect'):
+            with connection.connect() as conn:
+                query = text(
+                    f"SELECT symbol, timestamp, open, high, low, close, volume FROM prices WHERE symbol = :symbol ORDER BY timestamp DESC LIMIT :limit"
+                )
+                result = conn.execute(query, {"symbol": symbol, "limit": limit})
+                df = pd.DataFrame(result.fetchall(), columns=["symbol", "timestamp", "open", "high", "low", "close", "volume"])
+                return df
+        # Try SQLAlchemy connection
+        elif hasattr(connection, 'execute'):
+            query = text(
+                f"SELECT symbol, timestamp, open, high, low, close, volume FROM prices WHERE symbol = :symbol ORDER BY timestamp DESC LIMIT :limit"
+            )
+            result = connection.execute(query, {"symbol": symbol, "limit": limit})
+            df = pd.DataFrame(result.fetchall(), columns=["symbol", "timestamp", "open", "high", "low", "close", "volume"])
+            return df
+    except Exception:
+        pass
+    
+    # duckdb fallback
+    try:
+        result = connection.execute(
+            f"SELECT symbol, timestamp, open, high, low, close, volume FROM prices WHERE symbol = ? ORDER BY timestamp DESC LIMIT ?",
+            [symbol, limit]
+        ).fetchall()
+        df = pd.DataFrame(result, columns=["symbol", "timestamp", "open", "high", "low", "close", "volume"])
+        return df
+    except Exception:
+        return pd.DataFrame()
+
