@@ -64,7 +64,7 @@ PHASES = [
         "time": "2–3 hours",
         "tech": "dbt · Jinja2 SQL · PostgreSQL / DuckDB",
         "nav_page": "Indicators",
-        "status": "in_progress",
+        "status": "completed",
         "tasks": [
             ("dbt project structure (dbt_project.yml, profiles.yml)", True),
             ("sources.yml definition", True),
@@ -72,9 +72,9 @@ PHASES = [
             ("stg_prices.yml – column docs & not_null tests", True),
             ("fct_daily_prices.sql – OHLCV daily aggregation", True),
             ("fct_technical_indicators.sql – SMA 20 / 50 scaffold", True),
-            ("Full RSI, MACD, Bollinger Bands implementation", False),
-            ("dbt test suite passing", False),
-            ("dbt docs generated", False),
+            ("Full RSI, MACD, Bollinger Bands implementation", True),
+            ("dbt test suite passing", True),
+            ("dbt docs generated", True),
         ],
         "description": (
             "Transform raw prices into analytics-ready tables using dbt: "
@@ -89,13 +89,13 @@ PHASES = [
         "time": "1–2 hours",
         "tech": "Plotly · Streamlit · SQL",
         "nav_page": "Analysis",
-        "status": "not_started",
+        "status": "completed",
         "tasks": [
-            ("Analytics page UI scaffold", False),
-            ("Query dbt marts from Streamlit", False),
-            ("Performance metrics dashboard", False),
-            ("Correlation analysis chart", False),
-            ("Risk analysis visualizations", False),
+            ("Analytics page UI scaffold", True),
+            ("Query dbt marts from Streamlit", True),
+            ("Performance metrics dashboard", True),
+            ("Correlation analysis chart", True),
+            ("Risk analysis visualizations", True),
         ],
         "description": (
             "Build rich analytics dashboards querying dbt mart tables – "

@@ -4,8 +4,6 @@ Phase 1: Database Connection Abstraction
 Dual-backend database support:
 - DuckDB (Phase 1, local development)
 - PostgreSQL (Phase 2+, production)
-
-TODO: Implement database connections and context managers
 """
 
 import os
@@ -16,6 +14,11 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 
 @contextmanager
