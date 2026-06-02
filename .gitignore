@@ -37,6 +37,9 @@ Thumbs.db
 # Airflow
 airflow/logs/
 airflow/dags/__pycache__/
+airflow-webserver.pid
+airflow.cfg
+webserver_config.py
 
 # Testing
 .pytest_cache/
