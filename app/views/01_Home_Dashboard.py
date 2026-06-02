@@ -17,7 +17,7 @@ PHASES = [
         "time": "1–2 hours",
         "tech": "Python · Streamlit · yfinance · DuckDB · Plotly",
         "nav_page": "Stock Overview",
-        "status": "in_progress",   # completed | in_progress | not_started
+        "status": "completed",   # completed | in_progress | not_started
         "tasks": [
             ("Pull financial data from yfinance", True),
             ("ETL wrapper functions (load_prices_daily, load_prices_5m)", True),
@@ -25,7 +25,7 @@ PHASES = [
             ("Candlestick chart on Stock Overview page", True),
             ("Home Dashboard content (this page)", True),
             ("Data Explorer – raw table, CSV export & PostgreSQL push", True),
-            ("Admin panel – DB status & cache clear", False),
+            ("Admin panel – DB status & cache clear", True),
         ],
         "description": (
             "Core data pipeline: download OHLCV data from Yahoo Finance "
