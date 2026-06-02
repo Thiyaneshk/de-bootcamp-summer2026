@@ -147,19 +147,42 @@ symbols = ["AAPL", "MSFT", "ITC.NS", "LUPIN.NS", "GOOGL", "TSLA", "BTC-USD"]
 ### How to enable and trigger
 
 **Via Airflow UI:**
-1. Open http://localhost:8080
-2. Find `etl_prices_dag` → toggle **ON**
-3. Click **▶ Trigger DAG** to run immediately
+1. Open http://localhost:8080 (Login: `admin` / `admin`)
+2. Find `etl_prices_dag` → toggle **ON** to unpause the DAG.
+3. Click **▶ Trigger DAG** to run immediately.
 
-**Via CLI (on-demand trigger):**
-```bash
-docker-compose exec airflow-scheduler airflow dags trigger etl_prices_dag
-```
+**Via CLI (End-to-End Test Flow):**
 
-**Check DAG run status:**
-```bash
-docker-compose exec airflow-scheduler airflow dags list-runs -d etl_prices_dag
-```
+1. **Unpause the DAG** (must be done once, otherwise triggered runs will stay queued):
+   ```bash
+   docker-compose exec airflow-scheduler airflow dags unpause etl_prices_dag
+   ```
+
+2. **Trigger the DAG manually**:
+   ```bash
+   docker-compose exec airflow-scheduler airflow dags trigger etl_prices_dag
+   ```
+
+3. **Check DAG run status**:
+   ```bash
+   docker-compose exec airflow-scheduler airflow dags list-runs -d etl_prices_dag
+   ```
+
+4. **Monitor individual task states** in the latest run:
+   ```bash
+   # Replace the timestamp below with the execution_date shown by list-runs
+   docker-compose exec airflow-scheduler airflow tasks states-for-dag-run etl_prices_dag manual__2026-06-02T17:26:43+00:00
+   ```
+   *Expected output: All tasks (`download_prices`, `store_to_duckdb`, `push_to_postgres`, `validate_postgres`) should show `success`.*
+
+5. **Read execution logs** for a specific task (e.g. `download_prices`):
+   ```bash
+   # List log files inside the scheduler container
+   docker-compose exec airflow-scheduler find /opt/airflow/logs -type f
+   
+   # View task log file directly
+   docker-compose exec airflow-scheduler cat "/opt/airflow/logs/dag_id=etl_prices_dag/run_id=manual__2026-06-02T17:26:43+00:00/task_id=download_prices/attempt=1.log"
+   ```
 
 ### Change the schedule
 
@@ -181,26 +204,33 @@ docker-compose restart airflow-scheduler
 
 ## PostgreSQL Verification
 
+Verify that data was successfully synced from DuckDB to PostgreSQL after the DAG run finishes:
+
 ```bash
-# Connect to stocks database
+# Connect to stocks database in the postgres container
 docker-compose exec postgres psql -U postgres -d stocks
 
 # Inside psql:
-\dt                                              -- list tables
+\dt                                              -- list tables (should show prices)
 SELECT symbol, COUNT(*) FROM prices GROUP BY symbol;   -- row counts per symbol
-SELECT * FROM prices ORDER BY timestamp DESC LIMIT 5;  -- latest rows
-\q                                               -- exit
+SELECT * FROM prices ORDER BY timestamp DESC LIMIT 5;  -- view latest ingested rows
+\q                                               -- exit psql
 ```
 
-Expected output after first DAG run:
+Expected output for row counts per symbol:
 ```
-  symbol  | count
+  symbol  | count 
 ----------+-------
- AAPL     |   252
- ITC.NS   |   250
- LUPIN.NS |   250
- MSFT     |   252
+ AAPL     |    21
+ MSFT     |    21
+ GOOGL    |     5
+ LUPIN.NS |    22
+ BTC-USD  |     5
+ ITC.NS   |    22
+ TSLA     |     5
+(7 rows)
 ```
+*(Note: DuckDB stores full historical data while Airflow pushes the last 30 days of data to PostgreSQL during daily syncs).*
 
 ---
 
