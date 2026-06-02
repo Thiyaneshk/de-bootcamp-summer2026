@@ -1,15 +1,28 @@
 de_bootcamp:
   target: dev
   outputs:
+    # Local development (DuckDB, no Docker needed)
     dev:
       type: duckdb
       path: '../data/app.duckdb'
       schema: main
       threads: 4
 
+    # Production PostgreSQL — running locally outside Docker
     prod:
       type: postgres
-      host: localhost
+      host: localhost          # Change to 'postgres' when running inside Docker
+      user: postgres
+      password: postgres
+      port: 5432
+      dbname: stocks
+      schema: public
+      threads: 4
+
+    # Production PostgreSQL — inside Docker (uses Docker service name)
+    docker:
+      type: postgres
+      host: postgres           # Docker Compose service name
       user: postgres
       password: postgres
       port: 5432

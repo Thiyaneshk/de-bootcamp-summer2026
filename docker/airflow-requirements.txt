@@ -1,0 +1,18 @@
+# Airflow container additional requirements
+# These are added ON TOP of the existing apache/airflow:2.10.2 image
+# IMPORTANT: Keep protobuf pinned to avoid breaking Airflow's google-cloud providers
+
+# Data pipeline dependencies
+yfinance>=0.2.40
+duckdb>=1.0.0
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+sqlalchemy>=2.0.0
+
+# dbt
+dbt-core>=1.9.0
+dbt-postgres>=1.0.0
+
+# Utilities
+toml>=0.10.2
+python-dotenv>=1.0.0

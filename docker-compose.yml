@@ -1,25 +1,196 @@
-version: "3.8"
+# de-bootcamp-summer2026 — Full Docker Stack
+
+# ============================================================================
+# de-bootcamp-summer2026 — Full Docker Stack
+#
+# Services:
+#   postgres           — PostgreSQL 15 (stocks DB + Airflow metadata DB)
+#   airflow-init       — One-time: DB migration + admin user (exits when done)
+#   airflow-scheduler  — Runs DAGs on schedule
+#   airflow-webserver  — Airflow UI → http://localhost:8080
+#   dbt                — dbt runner (triggered by Airflow or manually)
+#   streamlit          — Streamlit app → http://localhost:8501
+#   ollama             — Local LLM (Phase 5, start with --profile phase5)
+#
+# Quick start:
+#   docker-compose up -d
+#
+# Phase 5 (Ollama):
+#   docker-compose --profile phase5 up -d
+# ============================================================================
+
+x-airflow-common: &airflow-common
+  # Custom Airflow image: official 2.10.2 + our project packages (duckdb, yfinance, dbt)
+  # Built using Airflow's official constraint file to avoid dependency conflicts
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.airflow
+  image: de-bootcamp-airflow:2.10.2   # cached after first build
+  env_file:
+    - docker/airflow.env
+  environment:
+    # Allow Airflow to import our project code from /opt/airflow
+    PYTHONPATH: /opt/airflow
+  volumes:
+    # Mount entire project so DAGs and app code are live-reloaded
+    - .:/opt/airflow
+    # Persistent Airflow logs
+    - airflow_logs:/opt/airflow/logs
+    # Shared DuckDB data directory
+    - duckdb_data:/opt/airflow/data
+  depends_on:
+    postgres:
+      condition: service_healthy
+  networks:
+    - de-network
+  restart: unless-stopped
 
 services:
-  # Phase 2: PostgreSQL data warehouse for Airflow and production data storage
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:15
     container_name: de-bootcamp-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: stocks
+      # Default DB (stocks is also created via init script)
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Creates stocks + airflow databases + prices schema on first boot
+      - ./docker/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+    networks:
+      - de-network
+    restart: unless-stopped
 
-  # Phase 5: Ollama for local LLM models (optional)
+  # ── Airflow Init (one-time, exits with code 0) ──────────────────────────────
+  airflow-init:
+    <<: *airflow-common
+    container_name: de-bootcamp-airflow-init
+    user: root
+    restart: "no"           # Run once, don't restart
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        echo "=== Setting volume permissions ==="
+        chown -R airflow:root /opt/airflow/data
+
+        echo "=== Migrating Airflow database ==="
+        su -s /bin/bash airflow -c "airflow db migrate"
+
+        echo "=== Creating admin user ==="
+        su -s /bin/bash airflow -c "airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@local.dev || true"
+
+        echo "=== Airflow init complete ==="
+
+  # ── Airflow Scheduler ───────────────────────────────────────────────────────
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: de-bootcamp-airflow-scheduler
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$${HOSTNAME}\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── Airflow Webserver ───────────────────────────────────────────────────────
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: de-bootcamp-airflow-webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── dbt Runner ─────────────────────────────────────────────────────────────
+  # Lightweight service — run manually or triggered via Airflow BashOperator
+  # Usage:
+  #   docker-compose run --rm dbt run --target prod
+  #   docker-compose run --rm dbt test --target prod
+  #   docker-compose run --rm dbt docs generate --target prod
+  dbt:
+    image: python:3.11-slim
+    container_name: de-bootcamp-dbt
+    working_dir: /app/dbt
+    environment:
+      DBT_PROFILES_DIR: /app/dbt
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stocks
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - de-network
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        pip install --quiet --no-cache-dir dbt-core dbt-postgres dbt-duckdb
+        exec dbt "$@"
+    command: ["--help"]    # Override at runtime: docker-compose run --rm dbt run --target prod
+    profiles:
+      - dbt                # Start only with: docker-compose --profile dbt run dbt ...
+
+  # ── Streamlit App ───────────────────────────────────────────────────────────
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: de-bootcamp-streamlit
+    environment:
+      POSTGRES_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/stocks
+      DUCKDB_PATH: /app/data/app.duckdb
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+      - duckdb_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - de-network
+    restart: unless-stopped
+    command: streamlit run app/main.py --server.port=8501 --server.address=0.0.0.0
+
+  # ── Ollama LLM (Phase 5, optional) ─────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
     container_name: de-bootcamp-ollama
@@ -29,28 +200,18 @@ services:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_MODELS=/root/.ollama/models
-    # Uncomment to run Ollama only when explicitly started
-    # profiles:
-    #   - phase5
+    networks:
+      - de-network
+    restart: unless-stopped
+    profiles:
+      - phase5
 
-  # Streamlit app
-  streamlit:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: de-bootcamp-streamlit
-    environment:
-      - POSTGRES_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/stocks
-      - DUCKDB_PATH=/app/data/app.duckdb
-    ports:
-      - "8501:8501"
-    volumes:
-      - .:/app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: streamlit run app/main.py --server.port=8501
+networks:
+  de-network:
+    driver: bridge
 
 volumes:
   postgres_data:
+  airflow_logs:
+  duckdb_data:
   ollama_data:

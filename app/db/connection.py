@@ -11,7 +11,8 @@ TODO: Implement database connections and context managers
 import os
 import duckdb
 from contextlib import contextmanager
-from sqlalchemy import create_engine, Engine, text
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import Engine
 from sqlalchemy.engine import URL
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
