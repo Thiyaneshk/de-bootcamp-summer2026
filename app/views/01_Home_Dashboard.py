@@ -109,13 +109,13 @@ PHASES = [
         "time": "2–3 hours",
         "tech": "Ollama · LangChain / RAG · Streamlit Chat",
         "nav_page": "Assistant Chat",
-        "status": "not_started",
+        "status": "completed",
         "tasks": [
             ("Ollama setup script (init_ollama.sh)", True),
             ("RAG module scaffold (app/core/rag/)", True),
-            ("Chat interface UI", False),
-            ("Context retrieval from price data", False),
-            ("LLM-powered response generation", False),
+            ("Chat interface UI", True),
+            ("Context retrieval from price data", True),
+            ("LLM-powered response generation", True),
         ],
         "description": (
             "Integrate a local LLM via Ollama and build a RAG-powered chat "
