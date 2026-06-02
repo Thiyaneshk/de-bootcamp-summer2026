@@ -232,6 +232,23 @@ Expected output for row counts per symbol:
 ```
 *(Note: DuckDB stores full historical data while Airflow pushes the last 30 days of data to PostgreSQL during daily syncs).*
 
+### Connecting via DBeaver (or other SQL Clients)
+
+You can connect to the PostgreSQL instance running inside Docker using GUI SQL clients like DBeaver:
+
+1. Create a new **PostgreSQL** connection in DBeaver.
+2. Fill in the following connection details:
+   - **Host:** `localhost`
+   - **Port:** `5432`
+   - **Database:** `stocks`
+   - **Username:** `postgres`
+   - **Password:** `postgres`
+3. Test Connection and Save.
+4. Once connected, browse the **Schemas** to see your tables:
+   - **`public`**: Contains the raw, unchanged source `prices` table (kept intact).
+   - **`public_staging`**: Contains dbt staging models/views (e.g. `stg_prices` view).
+   - **`public_marts`**: Contains dbt transformed analytics tables (e.g. `fct_daily_prices`, `fct_technical_indicators`).
+
 ---
 
 ## Data Flow: DuckDB ↔ PostgreSQL

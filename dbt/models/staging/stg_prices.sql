@@ -15,7 +15,7 @@ SELECT
     low,
     close,
     volume,
-    ROUND(((close - LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp)) / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp)) * 100, 2) AS pct_change
+    ROUND((((close - LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp)) / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp)) * 100)::numeric, 2) AS pct_change
 FROM {{ source('raw', 'prices') }}
 WHERE symbol IS NOT NULL
     AND timestamp IS NOT NULL

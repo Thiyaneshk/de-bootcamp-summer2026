@@ -36,6 +36,7 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 
 logger = logging.getLogger(__name__)
 
@@ -331,5 +332,11 @@ with DAG(
         doc_md="Assert PostgreSQL has data for all configured symbols",
     )
 
-    # Pipeline: download → duckdb → postgres → validate
-    t1_download >> t2_duckdb >> t3_postgres >> t4_validate
+    t5_dbt = BashOperator(
+        task_id="run_dbt",
+        bash_command="cd /opt/airflow/dbt && dbt run --profiles-dir /opt/airflow/dbt --target docker",
+        doc_md="Run dbt models to build technical indicators and daily marts in PostgreSQL",
+    )
+
+    # Pipeline: download → duckdb → postgres → validate → dbt
+    t1_download >> t2_duckdb >> t3_postgres >> t4_validate >> t5_dbt

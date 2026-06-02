@@ -46,5 +46,9 @@ webserver_config.py
 .coverage
 htmlcov/
 
+# dbt
+dbt/target/
+dbt/.user.yml
+
 # Ollama
 ollama_models/
