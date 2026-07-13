@@ -108,8 +108,6 @@ def execute_query(query: str, db_type: str = "auto") -> list:
 
     Returns:
         Query result rows
-
-    TODO: Implement query execution
     """
     db_type = db_type.lower()
     if db_type == "auto":

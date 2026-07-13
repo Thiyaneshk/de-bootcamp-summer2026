@@ -64,7 +64,8 @@ def load_db_stats() -> dict:
         if not _table_exists(conn, "prices"):
             conn.close()
             return {}
-        rows = conn.execute("""
+        rows = conn.execute(
+            """
             SELECT
                 COUNT(*)                                   AS total_rows,
                 COUNT(DISTINCT symbol)                     AS symbols,
@@ -72,7 +73,8 @@ def load_db_stats() -> dict:
                 MAX(timestamp)::DATE                       AS latest,
                 ROUND(pg_total_relation_size_ignore(), 2)  AS db_size_mb
             FROM prices
-        """).fetchone()
+        """
+        ).fetchone()
         conn.close()
         # pg_total_relation_size_ignore doesn't exist in DuckDB — get file size separately
         size_mb = (
@@ -167,7 +169,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
         engine = create_engine(pg_url, pool_pre_ping=True)
 
         # Ensure table exists
-        create_sql = text("""
+        create_sql = text(
+            """
             CREATE TABLE IF NOT EXISTS prices (
                 symbol    VARCHAR(20)  NOT NULL,
                 timestamp TIMESTAMPTZ NOT NULL,
@@ -178,7 +181,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
                 volume    BIGINT,
                 PRIMARY KEY (symbol, timestamp)
             )
-        """)
+        """
+        )
         with engine.begin() as conn:
             conn.execute(create_sql)
 
@@ -189,7 +193,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
         with engine.begin() as conn:
             # Write to temp table
             tmp_df.to_sql("prices_tmp", conn, if_exists="replace", index=False)
-            upsert_sql = text("""
+            upsert_sql = text(
+                """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_tmp
@@ -199,7 +204,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """)
+            """
+            )
             conn.execute(upsert_sql)
             conn.execute(text("DROP TABLE IF EXISTS prices_tmp"))
 

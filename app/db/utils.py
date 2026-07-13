@@ -203,7 +203,8 @@ def _insert_duckdb(conn, records: list[dict]) -> int:
 def _insert_sqlalchemy(conn, records: list[dict], pg: bool = False) -> int:
     """Upsert into PostgreSQL or SQLAlchemy-backed DB."""
     if pg:
-        upsert_sql = text("""
+        upsert_sql = text(
+            """
             INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
             VALUES (:symbol, :timestamp, :open, :high, :low, :close, :volume)
             ON CONFLICT (symbol, timestamp) DO UPDATE SET
@@ -212,13 +213,16 @@ def _insert_sqlalchemy(conn, records: list[dict], pg: bool = False) -> int:
                 low    = EXCLUDED.low,
                 close  = EXCLUDED.close,
                 volume = EXCLUDED.volume
-        """)
+        """
+        )
     else:
         # Generic SQLAlchemy (e.g. duckdb via SQLAlchemy dialect)
-        upsert_sql = text("""
+        upsert_sql = text(
+            """
             INSERT OR REPLACE INTO prices (symbol, timestamp, open, high, low, close, volume)
             VALUES (:symbol, :timestamp, :open, :high, :low, :close, :volume)
-        """)
+        """
+        )
 
     try:
         conn.execute(upsert_sql, records)

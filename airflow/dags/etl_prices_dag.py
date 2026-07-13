@@ -204,7 +204,9 @@ def push_to_postgres(**context) -> dict:
     try:
         # Ensure prices table exists in PostgreSQL
         with engine.begin() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 CREATE TABLE IF NOT EXISTS prices (
                     symbol    VARCHAR(20)  NOT NULL,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -215,12 +217,16 @@ def push_to_postgres(**context) -> dict:
                     volume    BIGINT,
                     PRIMARY KEY (symbol, timestamp)
                 )
-            """))
+            """
+                )
+            )
 
         # Upsert via staging temp table
         with engine.begin() as conn:
             df.to_sql("prices_etl_tmp", conn, if_exists="replace", index=False)
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_etl_tmp
@@ -230,7 +236,9 @@ def push_to_postgres(**context) -> dict:
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """))
+            """
+                )
+            )
             conn.execute(text("DROP TABLE IF EXISTS prices_etl_tmp"))
 
         pg_rows = len(df)

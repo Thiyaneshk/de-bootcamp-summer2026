@@ -152,7 +152,9 @@ def refresh_and_sync(
 
         # Ensure table exists in Postgres
         with engine.begin() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 CREATE TABLE IF NOT EXISTS prices (
                     symbol    VARCHAR(20)  NOT NULL,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -163,12 +165,15 @@ def refresh_and_sync(
                     volume    BIGINT,
                     PRIMARY KEY (symbol, timestamp)
                 )
-            """))
+            """
+                )
+            )
 
         # Upsert via temp table
         with engine.begin() as conn:
             df_all.to_sql("prices_tmp", conn, if_exists="replace", index=False)
-            upsert = text("""
+            upsert = text(
+                """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_tmp
@@ -178,7 +183,8 @@ def refresh_and_sync(
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """)
+            """
+            )
             conn.execute(upsert)
             conn.execute(text("DROP TABLE IF EXISTS prices_tmp"))
 
