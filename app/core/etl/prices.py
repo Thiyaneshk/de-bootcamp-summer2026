@@ -2,17 +2,15 @@
 Phase 1: yfinance Data Loading
 
 Extract stock price data from Yahoo Finance API.
-
-TODO: Implement yfinance wrapper functions:
-- load_prices_5m(symbol, start_date, end_date) → DataFrame
-- load_prices_daily(symbol, start_date, end_date) → DataFrame
-- Caching strategy (local file or in-memory)
 """
 
 import pandas as pd
 import yfinance as yf
 
+from app.core.cache.redis_cache import redis_cache
 
+
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_5m(
     symbol: str,
     start_date: str = None,
@@ -21,17 +19,15 @@ def load_prices_5m(
 ) -> pd.DataFrame:
     """
     Load 5-minute interval price data from yfinance.
-    
+
     Args:
         symbol: Stock symbol (e.g., "AAPL", "BTC-USD")
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         progress: Show download progress bar
-    
+
     Returns:
         DataFrame with columns: Open, High, Low, Close, Volume
-        
-    TODO: Implement logic
     """
     # Delegate to yfinance with 5m interval. Keep simple for phase 1.
     params: dict = {}
@@ -48,9 +44,12 @@ def load_prices_5m(
         # MultiIndex from yfinance is typically (Price, Ticker) — keep the Price level
         data.columns = data.columns.get_level_values(0)
     data.index = pd.to_datetime(data.index)
-    return data[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]]
+    return data[
+        [c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]
+    ]
 
 
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_daily(
     symbol: str,
     start_date: str = None,
@@ -59,17 +58,15 @@ def load_prices_daily(
 ) -> pd.DataFrame:
     """
     Load daily price data from yfinance.
-    
+
     Args:
         symbol: Stock symbol
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         period: Period (1d, 5d, 1mo, 3mo, 6mo, 1y, etc.)
-    
+
     Returns:
         DataFrame with daily OHLCV data
-        
-    TODO: Implement logic
     """
     params: dict = {}
     # yfinance prefers either period or start/end. Use start/end if provided.
@@ -104,16 +101,14 @@ def download_multiple_symbols(
 ) -> dict[str, pd.DataFrame]:
     """
     Download data for multiple symbols.
-    
+
     Args:
         symbols: List of stock symbols
         start_date: Start date
         end_date: End date
-    
+
     Returns:
         Dictionary mapping symbol to DataFrame
-        
-    TODO: Implement logic with parallel downloads
     """
     # Use yfinance to download multiple symbols at daily interval and return dict
     if not symbols:
@@ -129,12 +124,24 @@ def download_multiple_symbols(
                 if isinstance(sub.columns, pd.MultiIndex):
                     sub.columns = sub.columns.get_level_values(0)
                 sub.index = pd.to_datetime(sub.index)
-                results[sym] = sub[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in sub.columns]]
+                results[sym] = sub[
+                    [
+                        c
+                        for c in ["Open", "High", "Low", "Close", "Volume"]
+                        if c in sub.columns
+                    ]
+                ]
     else:
         # Single table returned: same for all symbols input (unlikely)
         flat = data
         flat.index = pd.to_datetime(flat.index)
         for sym in symbols:
-            results[sym] = flat[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in flat.columns]]
+            results[sym] = flat[
+                [
+                    c
+                    for c in ["Open", "High", "Low", "Close", "Volume"]
+                    if c in flat.columns
+                ]
+            ]
 
     return results

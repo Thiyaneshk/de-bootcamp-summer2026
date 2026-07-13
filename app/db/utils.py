@@ -5,7 +5,6 @@ Helper functions for database operations — DuckDB and PostgreSQL.
 """
 
 import logging
-import os
 
 from sqlalchemy import text
 
@@ -51,6 +50,7 @@ def _is_duckdb(connection) -> bool:
     """Return True if connection is a native duckdb.DuckDBPyConnection."""
     try:
         import duckdb
+
         return isinstance(connection, duckdb.DuckDBPyConnection)
     except ImportError:
         return False
@@ -58,17 +58,23 @@ def _is_duckdb(connection) -> bool:
 
 def _is_pg_engine(connection) -> bool:
     """Return True if connection is a SQLAlchemy PostgreSQL engine/connection."""
-    dialect = getattr(getattr(connection, 'dialect', None), 'name', '') or ''
-    if dialect == 'postgresql':
+    dialect = getattr(getattr(connection, "dialect", None), "name", "") or ""
+    if dialect == "postgresql":
         return True
     # Try via engine attribute
-    dialect2 = getattr(getattr(getattr(connection, 'engine', None), 'dialect', None), 'name', '') or ''
-    return dialect2 == 'postgresql'
+    dialect2 = (
+        getattr(
+            getattr(getattr(connection, "engine", None), "dialect", None), "name", ""
+        )
+        or ""
+    )
+    return dialect2 == "postgresql"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # create_prices_table
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def create_prices_table(connection) -> None:
     """
@@ -80,10 +86,12 @@ def create_prices_table(connection) -> None:
         return
 
     # SQLAlchemy path
-    ddl = _CREATE_PRICES_POSTGRES if _is_pg_engine(connection) else _CREATE_PRICES_DUCKDB
+    ddl = (
+        _CREATE_PRICES_POSTGRES if _is_pg_engine(connection) else _CREATE_PRICES_DUCKDB
+    )
 
     # Engine (has .connect()), use begin()
-    if hasattr(connection, 'connect'):
+    if hasattr(connection, "connect"):
         with connection.begin() as conn:
             conn.execute(text(ddl))
             try:
@@ -93,16 +101,19 @@ def create_prices_table(connection) -> None:
         return
 
     # Already a Connection object
-    if hasattr(connection, 'execute'):
+    if hasattr(connection, "execute"):
         connection.execute(text(ddl))
         return
 
-    logger.error("create_prices_table: unrecognised connection type %s", type(connection))
+    logger.error(
+        "create_prices_table: unrecognised connection type %s", type(connection)
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # insert_prices
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def insert_prices(connection, data: list[dict]) -> int:
     """
@@ -122,13 +133,13 @@ def insert_prices(connection, data: list[dict]) -> int:
     # Normalise to list of param dicts
     records = [
         {
-            "symbol":    r.get("symbol"),
+            "symbol": r.get("symbol"),
             "timestamp": r.get("timestamp"),
-            "open":      r.get("open"),
-            "high":      r.get("high"),
-            "low":       r.get("low"),
-            "close":     r.get("close"),
-            "volume":    r.get("volume"),
+            "open": r.get("open"),
+            "high": r.get("high"),
+            "low": r.get("low"),
+            "close": r.get("close"),
+            "volume": r.get("volume"),
         }
         for r in data
     ]
@@ -138,13 +149,13 @@ def insert_prices(connection, data: list[dict]) -> int:
         return _insert_duckdb(connection, records)
 
     # ── SQLAlchemy Engine ─────────────────────────────────────────────────────
-    if hasattr(connection, 'connect'):
+    if hasattr(connection, "connect"):
         # It's an Engine — open a connection
         with connection.begin() as conn:
             return _insert_sqlalchemy(conn, records, pg=_is_pg_engine(connection))
 
     # ── SQLAlchemy Connection ────────────────────────────────────────────────
-    if hasattr(connection, 'execute'):
+    if hasattr(connection, "execute"):
         return _insert_sqlalchemy(connection, records, pg=_is_pg_engine(connection))
 
     logger.error("insert_prices: unrecognised connection type %s", type(connection))
@@ -166,20 +177,34 @@ def _insert_duckdb(conn, records: list[dict]) -> int:
     count = 0
     for r in records:
         try:
-            conn.execute(upsert_sql, [
-                r["symbol"], r["timestamp"],
-                r["open"], r["high"], r["low"], r["close"], r["volume"],
-            ])
+            conn.execute(
+                upsert_sql,
+                [
+                    r["symbol"],
+                    r["timestamp"],
+                    r["open"],
+                    r["high"],
+                    r["low"],
+                    r["close"],
+                    r["volume"],
+                ],
+            )
             count += 1
         except Exception as e:
-            logger.debug("DuckDB upsert skip (%s @ %s): %s", r.get("symbol"), r.get("timestamp"), e)
+            logger.debug(
+                "DuckDB upsert skip (%s @ %s): %s",
+                r.get("symbol"),
+                r.get("timestamp"),
+                e,
+            )
     return count
 
 
 def _insert_sqlalchemy(conn, records: list[dict], pg: bool = False) -> int:
     """Upsert into PostgreSQL or SQLAlchemy-backed DB."""
     if pg:
-        upsert_sql = text("""
+        upsert_sql = text(
+            """
             INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
             VALUES (:symbol, :timestamp, :open, :high, :low, :close, :volume)
             ON CONFLICT (symbol, timestamp) DO UPDATE SET
@@ -188,32 +213,42 @@ def _insert_sqlalchemy(conn, records: list[dict], pg: bool = False) -> int:
                 low    = EXCLUDED.low,
                 close  = EXCLUDED.close,
                 volume = EXCLUDED.volume
-        """)
+        """
+        )
     else:
         # Generic SQLAlchemy (e.g. duckdb via SQLAlchemy dialect)
-        upsert_sql = text("""
+        upsert_sql = text(
+            """
             INSERT OR REPLACE INTO prices (symbol, timestamp, open, high, low, close, volume)
             VALUES (:symbol, :timestamp, :open, :high, :low, :close, :volume)
-        """)
+        """
+        )
 
     try:
         conn.execute(upsert_sql, records)
         return len(records)
     except Exception as e:
-        logger.warning("Bulk upsert failed (%s), falling back to row-by-row: %s", "pg" if pg else "generic", e)
+        logger.warning(
+            "Bulk upsert failed (%s), falling back to row-by-row: %s",
+            "pg" if pg else "generic",
+            e,
+        )
         count = 0
         for r in records:
             try:
                 conn.execute(upsert_sql, r)
                 count += 1
             except Exception as re:
-                logger.debug("Row skip (%s @ %s): %s", r.get("symbol"), r.get("timestamp"), re)
+                logger.debug(
+                    "Row skip (%s @ %s): %s", r.get("symbol"), r.get("timestamp"), re
+                )
         return count
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # get_latest_prices
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def get_latest_prices(connection, symbol: str, limit: int = 100) -> list[dict]:
     """
@@ -229,11 +264,18 @@ def get_latest_prices(connection, symbol: str, limit: int = 100) -> list[dict]:
 
     if _is_duckdb(connection):
         rows = connection.execute(sql).fetchall()
-        return [dict(zip(["symbol", "timestamp", "open", "high", "low", "close", "volume"], r)) for r in rows]
+        return [
+            dict(
+                zip(
+                    ["symbol", "timestamp", "open", "high", "low", "close", "volume"], r
+                )
+            )
+            for r in rows
+        ]
 
     # SQLAlchemy
     try:
-        if hasattr(connection, 'connect'):
+        if hasattr(connection, "connect"):
             with connection.connect() as conn:
                 result = conn.execute(text(sql))
                 return [dict(r._mapping) for r in result.fetchall()]

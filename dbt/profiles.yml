@@ -19,6 +19,17 @@ de_bootcamp:
       schema: public
       threads: 4
 
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ACCOUNTADMIN
+      database: BOOTCAMP_DB
+      warehouse: COMPUTE_WH
+      schema: RAW
+      threads: 4
+
     # Production PostgreSQL — inside Docker (uses Docker service name)
     docker:
       type: postgres

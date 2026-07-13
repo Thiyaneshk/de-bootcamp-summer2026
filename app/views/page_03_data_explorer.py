@@ -6,9 +6,9 @@ export to CSV, and push selected symbols to PostgreSQL.
 """
 
 import io
-import os
 import logging
-from datetime import date, datetime, timedelta
+import os
+from datetime import date, timedelta
 
 import duckdb
 import pandas as pd
@@ -30,8 +30,8 @@ def _duck_connect():
 def _table_exists(conn, table: str) -> bool:
     try:
         rows = conn.execute(
-            "SELECT count(*) FROM information_schema.tables "
-            "WHERE table_name = ?", [table]
+            "SELECT count(*) FROM information_schema.tables " "WHERE table_name = ?",
+            [table],
         ).fetchone()
         return rows[0] > 0
     except Exception:
@@ -64,7 +64,8 @@ def load_db_stats() -> dict:
         if not _table_exists(conn, "prices"):
             conn.close()
             return {}
-        rows = conn.execute("""
+        rows = conn.execute(
+            """
             SELECT
                 COUNT(*)                                   AS total_rows,
                 COUNT(DISTINCT symbol)                     AS symbols,
@@ -72,16 +73,21 @@ def load_db_stats() -> dict:
                 MAX(timestamp)::DATE                       AS latest,
                 ROUND(pg_total_relation_size_ignore(), 2)  AS db_size_mb
             FROM prices
-        """).fetchone()
+        """
+        ).fetchone()
         conn.close()
         # pg_total_relation_size_ignore doesn't exist in DuckDB — get file size separately
-        size_mb = round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2) if os.path.exists(DUCKDB_PATH) else 0
+        size_mb = (
+            round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2)
+            if os.path.exists(DUCKDB_PATH)
+            else 0
+        )
         return {
             "total_rows": rows[0],
-            "symbols":    rows[1],
-            "earliest":   str(rows[2]),
-            "latest":     str(rows[3]),
-            "size_mb":    size_mb,
+            "symbols": rows[1],
+            "earliest": str(rows[2]),
+            "latest": str(rows[3]),
+            "size_mb": size_mb,
         }
     except Exception:
         # Simpler fallback
@@ -91,13 +97,17 @@ def load_db_stats() -> dict:
                 "SELECT COUNT(*), COUNT(DISTINCT symbol), MIN(timestamp), MAX(timestamp) FROM prices"
             ).fetchone()
             conn.close()
-            size_mb = round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2) if os.path.exists(DUCKDB_PATH) else 0
+            size_mb = (
+                round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2)
+                if os.path.exists(DUCKDB_PATH)
+                else 0
+            )
             return {
                 "total_rows": r[0],
-                "symbols":    r[1],
-                "earliest":   str(r[2])[:10] if r[2] else "—",
-                "latest":     str(r[3])[:10] if r[3] else "—",
-                "size_mb":    size_mb,
+                "symbols": r[1],
+                "earliest": str(r[2])[:10] if r[2] else "—",
+                "latest": str(r[3])[:10] if r[3] else "—",
+                "size_mb": size_mb,
             }
         except Exception as e:
             logger.warning("Stats query failed: %s", e)
@@ -144,6 +154,7 @@ def load_prices_from_duck(
 
 # ── PostgreSQL push ───────────────────────────────────────────────────────────
 
+
 def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
     """
     Upsert rows from *df* into PostgreSQL prices table.
@@ -158,7 +169,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
         engine = create_engine(pg_url, pool_pre_ping=True)
 
         # Ensure table exists
-        create_sql = text("""
+        create_sql = text(
+            """
             CREATE TABLE IF NOT EXISTS prices (
                 symbol    VARCHAR(20)  NOT NULL,
                 timestamp TIMESTAMPTZ NOT NULL,
@@ -169,7 +181,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
                 volume    BIGINT,
                 PRIMARY KEY (symbol, timestamp)
             )
-        """)
+        """
+        )
         with engine.begin() as conn:
             conn.execute(create_sql)
 
@@ -180,7 +193,8 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
         with engine.begin() as conn:
             # Write to temp table
             tmp_df.to_sql("prices_tmp", conn, if_exists="replace", index=False)
-            upsert_sql = text("""
+            upsert_sql = text(
+                """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_tmp
@@ -190,8 +204,9 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """)
-            result = conn.execute(upsert_sql)
+            """
+            )
+            conn.execute(upsert_sql)
             conn.execute(text("DROP TABLE IF EXISTS prices_tmp"))
 
         engine.dispose()
@@ -202,6 +217,7 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
 
 
 # ── Page ──────────────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     """Data Explorer page."""
@@ -233,11 +249,11 @@ def main() -> None:
         return
 
     s1, s2, s3, s4, s5 = st.columns(5)
-    s1.metric("📦 Total Rows",   f"{stats.get('total_rows', 0):,}")
-    s2.metric("🏷️ Symbols",      stats.get("symbols", 0))
-    s3.metric("📅 Earliest",     stats.get("earliest", "—"))
-    s4.metric("📅 Latest",       stats.get("latest", "—"))
-    s5.metric("💾 DB Size",      f"{stats.get('size_mb', 0)} MB")
+    s1.metric("📦 Total Rows", f"{stats.get('total_rows', 0):,}")
+    s2.metric("🏷️ Symbols", stats.get("symbols", 0))
+    s3.metric("📅 Earliest", stats.get("earliest", "—"))
+    s4.metric("📅 Latest", stats.get("latest", "—"))
+    s5.metric("💾 DB Size", f"{stats.get('size_mb', 0)} MB")
 
     st.divider()
 
@@ -258,7 +274,9 @@ def main() -> None:
     with col_end:
         end_dt = st.date_input("To date", value=date.today())
     with col_rows:
-        max_rows = st.number_input("Max rows", value=500, min_value=10, max_value=10_000, step=100)
+        max_rows = st.number_input(
+            "Max rows", value=500, min_value=10, max_value=10_000, step=100
+        )
 
     if not selected:
         st.info("👆 Select at least one symbol to load data.")
@@ -281,7 +299,9 @@ def main() -> None:
     df = df.head(max_rows)
 
     # ── Tabs: table | stats | charts ─────────────────────────────────────────
-    tab_data, tab_stats, tab_push = st.tabs(["📋 Data Table", "📊 Summary Stats", "🚀 Push to PostgreSQL"])
+    tab_data, tab_stats, tab_push = st.tabs(
+        ["📋 Data Table", "📊 Summary Stats", "🚀 Push to PostgreSQL"]
+    )
 
     # ── TAB 1: Data table ────────────────────────────────────────────────────
     with tab_data:
@@ -316,33 +336,36 @@ def main() -> None:
             if sym_df.empty:
                 continue
             st.markdown(f"#### {sym} — {len(sym_df):,} rows")
-            num_cols = [c for c in ["open", "high", "low", "close", "volume"] if c in sym_df.columns]
+            num_cols = [
+                c
+                for c in ["open", "high", "low", "close", "volume"]
+                if c in sym_df.columns
+            ]
             st.dataframe(sym_df[num_cols].describe().round(4), use_container_width=True)
 
             # Latest close
             latest_row = sym_df.sort_values("timestamp").iloc[-1]
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Latest Close", f"{latest_row.get('close', 0):.4f}")
-            c2.metric("Latest High",  f"{latest_row.get('high', 0):.4f}")
-            c3.metric("Latest Low",   f"{latest_row.get('low', 0):.4f}")
-            c4.metric("Latest Vol",   f"{int(latest_row.get('volume', 0)):,}")
+            c2.metric("Latest High", f"{latest_row.get('high', 0):.4f}")
+            c3.metric("Latest Low", f"{latest_row.get('low', 0):.4f}")
+            c4.metric("Latest Vol", f"{int(latest_row.get('volume', 0)):,}")
             st.divider()
 
     # ── TAB 3: Push to PostgreSQL ─────────────────────────────────────────────
     with tab_push:
-        st.markdown(
-            """
+        st.markdown("""
             Push the data currently visible in the table above into **PostgreSQL**.
             The `prices` table will be created automatically if it doesn't exist.
             Rows are **upserted** (no duplicates).
-            """
-        )
+            """)
 
         # Read PG URL from env or let user enter it
         pg_url_env = os.getenv("POSTGRES_URL", "")
         pg_url = st.text_input(
             "PostgreSQL connection URL",
-            value=pg_url_env or "postgresql+psycopg2://postgres:postgres@localhost:5432/stocks",
+            value=pg_url_env
+            or "postgresql+psycopg2://postgres:postgres@localhost:5432/stocks",
             type="password",
             help="Format: postgresql+psycopg2://user:password@host:port/dbname",
         )
@@ -359,7 +382,9 @@ def main() -> None:
             f"for symbols: **{', '.join(push_symbols)}**"
         )
 
-        if st.button("🚀 Push to PostgreSQL", type="primary", disabled=not push_symbols):
+        if st.button(
+            "🚀 Push to PostgreSQL", type="primary", disabled=not push_symbols
+        ):
             push_df = df[df["symbol"].isin(push_symbols)].copy()
             if push_df.empty:
                 st.warning("Nothing to push — DataFrame is empty for selected symbols.")
@@ -374,13 +399,14 @@ def main() -> None:
                         "```bash\ndocker-compose up -d postgres\n```"
                     )
                 else:
-                    st.success(f"✅ Successfully upserted **{rows_inserted:,} rows** into PostgreSQL `prices` table!")
+                    st.success(
+                        f"✅ Successfully upserted **{rows_inserted:,} rows** into PostgreSQL `prices` table!"
+                    )
                     st.balloons()
 
         st.divider()
         st.subheader("🕐 Automated Daily Sync")
-        st.markdown(
-            """
+        st.markdown("""
             To run this push automatically every day at a set time, use the built-in scheduler:
 
             ```bash
@@ -397,8 +423,7 @@ def main() -> None:
             3. Upsert into **PostgreSQL** (persistent warehouse)
 
             > Set `POSTGRES_URL` in your `.env` file so the scheduler picks it up automatically.
-            """
-        )
+            """)
 
 
 if __name__ == "__main__":

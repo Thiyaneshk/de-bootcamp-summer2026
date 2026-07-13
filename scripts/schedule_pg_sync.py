@@ -29,7 +29,6 @@ import argparse
 import logging
 import os
 import signal
-import sys
 import time
 from datetime import datetime, timedelta
 
@@ -42,6 +41,7 @@ logger = logging.getLogger("schedule_pg_sync")
 
 # ── .env loader (optional) ────────────────────────────────────────────────────
 
+
 def _load_dotenv() -> None:
     """Load .env file into os.environ if python-dotenv is available."""
     env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
@@ -49,6 +49,7 @@ def _load_dotenv() -> None:
         return
     try:
         from dotenv import load_dotenv
+
         load_dotenv(env_path)
         logger.info("Loaded .env from %s", env_path)
     except ImportError:
@@ -62,6 +63,7 @@ def _load_dotenv() -> None:
 
 
 # ── Scheduling helpers ────────────────────────────────────────────────────────
+
 
 def _seconds_until(target_time_str: str) -> float:
     """Return seconds until the next occurrence of HH:MM today (or tomorrow)."""
@@ -85,7 +87,9 @@ def _run_sync(symbols: list[str], use_all: bool, period: str) -> None:
         )
         return
 
-    logger.info("=== Sync starting — %s ===", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logger.info(
+        "=== Sync starting — %s ===", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
     try:
         if use_all:
@@ -107,6 +111,7 @@ def _run_sync(symbols: list[str], use_all: bool, period: str) -> None:
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
+
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -173,7 +178,7 @@ def main(argv=None) -> None:
         logger.info("Received signal %s — shutting down after current sleep", sig)
         _stop = True
 
-    signal.signal(signal.SIGINT,  _handle_signal)
+    signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
     # ── Scheduler loop ────────────────────────────────────────────────────────
@@ -187,7 +192,11 @@ def main(argv=None) -> None:
     while not _stop:
         wait_secs = _seconds_until(args.time)
         next_run = datetime.now() + timedelta(seconds=wait_secs)
-        logger.info("Next sync at %s (in %.0f s)", next_run.strftime("%Y-%m-%d %H:%M:%S"), wait_secs)
+        logger.info(
+            "Next sync at %s (in %.0f s)",
+            next_run.strftime("%Y-%m-%d %H:%M:%S"),
+            wait_secs,
+        )
 
         # Sleep in 60s chunks so we can respond to signals promptly
         slept = 0.0

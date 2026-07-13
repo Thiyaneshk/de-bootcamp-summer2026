@@ -49,6 +49,24 @@ phase5 = [
     "langchain>=0.1.0",
 ]
 
+# Phase 6: Redis Distributed Caching
+phase6 = [
+    "redis>=5.0.0",
+]
+
+# Phase 7: Snowflake Cloud Data Warehouse
+phase7 = [
+    "snowflake-connector-python>=3.6.0",
+    "dbt-snowflake>=1.9.0",
+]
+
+# Phase 8: Databricks Lakehouse
+phase8 = [
+  "databricks-sdk>=0.20.0",
+  "apache-airflow-providers-databricks>=6.0.0",
+  "delta-spark>=3.0.0",
+]
+
 # Development dependencies
 dev = [
     "pytest>=7.0.0",
@@ -59,7 +77,7 @@ dev = [
 
 # All dependencies (for Docker)
 all = [
-    "de-bootcamp-summer2026[phase1,phase2,phase3,phase5,dev]"
+    "de-bootcamp-summer2026[phase1,phase2,phase3,phase5,phase6,phase7,phase8,dev]"
 ]
 
 [tool.setuptools]
@@ -86,3 +104,27 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+
+[lint]
+extend-select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "N",
+    "UP",
+]
+ignore = [
+    "E501",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dbt_packages",
+    ".dbt",
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]

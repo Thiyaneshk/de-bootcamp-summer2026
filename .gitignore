@@ -52,3 +52,6 @@ dbt/.user.yml
 
 # Ollama
 ollama_models/
+airflow-webserver.pid
+airflow.cfg
+webserver_config.py

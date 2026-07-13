@@ -7,9 +7,11 @@ PostgreSQL database and answer financial questions using a local Ollama LLM.
 
 import logging
 import re
+
+import ollama
 import pandas as pd
 from sqlalchemy import text
-import ollama
+
 from app.config import AppConfig
 from app.db.connection import get_postgres_engine
 
@@ -34,7 +36,7 @@ def retrieve_context(query: str, days_limit: int = 10) -> str:
     """
     config = AppConfig()
     all_symbols = config.symbols
-    
+
     # Identify which symbols are mentioned in the query
     mentioned = []
     for sym in all_symbols:
@@ -44,7 +46,7 @@ def retrieve_context(query: str, days_limit: int = 10) -> str:
             mentioned.append(sym)
 
     context_parts = []
-    
+
     try:
         with get_postgres_engine() as engine:
             if mentioned:
@@ -64,22 +66,41 @@ def retrieve_context(query: str, days_limit: int = 10) -> str:
                         ORDER BY timestamp DESC
                         LIMIT :limit
                     """
-                    
-                    df_prices = pd.read_sql(text(price_query), engine, params={"symbol": sym, "limit": days_limit})
-                    df_ind = pd.read_sql(text(ind_query), engine, params={"symbol": sym, "limit": days_limit})
-                    
+
+                    df_prices = pd.read_sql(
+                        text(price_query),
+                        engine,
+                        params={"symbol": sym, "limit": days_limit},
+                    )
+                    df_ind = pd.read_sql(
+                        text(ind_query),
+                        engine,
+                        params={"symbol": sym, "limit": days_limit},
+                    )
+
                     if not df_prices.empty:
                         # Reverse to show chronological order
                         df_prices = df_prices.iloc[::-1]
-                        for col in ["daily_open", "daily_high", "daily_low", "daily_close"]:
+                        for col in [
+                            "daily_open",
+                            "daily_high",
+                            "daily_low",
+                            "daily_close",
+                        ]:
                             df_prices[col] = df_prices[col].round(2)
-                        context_parts.append(f"### {sym} Price History (Last {len(df_prices)} trading days):\n" + df_prices.to_markdown(index=False))
-                        
+                        context_parts.append(
+                            f"### {sym} Price History (Last {len(df_prices)} trading days):\n"
+                            + df_prices.to_markdown(index=False)
+                        )
+
                     if not df_ind.empty:
                         df_ind = df_ind.iloc[::-1]
                         for col in ["close", "sma_20", "sma_50", "ema_50", "ema_200"]:
                             df_ind[col] = df_ind[col].round(2)
-                        context_parts.append(f"### {sym} Technical Indicators (Last {len(df_ind)} trading days):\n" + df_ind.to_markdown(index=False))
+                        context_parts.append(
+                            f"### {sym} Technical Indicators (Last {len(df_ind)} trading days):\n"
+                            + df_ind.to_markdown(index=False)
+                        )
             else:
                 # If no specific symbol is mentioned, load the latest snapshot for all symbols
                 snapshot_query = """
@@ -95,11 +116,14 @@ def retrieve_context(query: str, days_limit: int = 10) -> str:
                 if not df_snapshot.empty:
                     for col in ["daily_open", "daily_high", "daily_low", "daily_close"]:
                         df_snapshot[col] = df_snapshot[col].round(2)
-                    context_parts.append("### Latest Market Price Snapshot (All Active Tickers):\n" + df_snapshot.to_markdown(index=False))
-                    
+                    context_parts.append(
+                        "### Latest Market Price Snapshot (All Active Tickers):\n"
+                        + df_snapshot.to_markdown(index=False)
+                    )
+
                 # Also pull volatility summary to aid comparisons
                 vol_query = """
-                    SELECT 
+                    SELECT
                         symbol,
                         COUNT(daily_close) as data_points,
                         MIN(daily_close) as min_price,
@@ -111,16 +135,25 @@ def retrieve_context(query: str, days_limit: int = 10) -> str:
                 """
                 df_vol = pd.read_sql(text(vol_query), engine)
                 if not df_vol.empty:
-                    context_parts.append("### Historical Price Ranges & Volatility:\n" + df_vol.to_markdown(index=False))
+                    context_parts.append(
+                        "### Historical Price Ranges & Volatility:\n"
+                        + df_vol.to_markdown(index=False)
+                    )
 
     except Exception as e:
         logger.error("RAG context retrieval failed: %s", e)
         context_parts.append(f"Error retrieving database context: {e}")
 
-    return "\n\n".join(context_parts) if context_parts else "No relevant database data found."
+    return (
+        "\n\n".join(context_parts)
+        if context_parts
+        else "No relevant database data found."
+    )
 
 
-def chat_with_rag(query: str, model: str = "mistral", chat_history: list = None, days_limit: int = 10) -> dict:
+def chat_with_rag(
+    query: str, model: str = "mistral", chat_history: list = None, days_limit: int = 10
+) -> dict:
     """
     Main RAG chat entry point. Combines query context, rules, and history.
     """
@@ -129,7 +162,7 @@ def chat_with_rag(query: str, model: str = "mistral", chat_history: list = None,
 
     # 1. Retrieve data context
     context = retrieve_context(query, days_limit=days_limit)
-    
+
     # 2. Build system instructions
     system_prompt = f"""You are Antigravity, a professional financial analyst AI assistant.
 You have access to historical stock prices and computed moving averages (SMA 20, SMA 50, EMA 50, EMA 200) stored in a PostgreSQL database.
@@ -147,11 +180,11 @@ RETRIEVED DATABASE CONTEXT:
 
     # 3. Construct chat messages array for Ollama Chat API
     messages = [{"role": "system", "content": system_prompt}]
-    
+
     # Append sliding window of memory (last 6 messages)
     for msg in chat_history[-6:]:
         messages.append({"role": msg["role"], "content": msg["content"]})
-        
+
     # Append the current query
     messages.append({"role": "user", "content": query})
 
@@ -159,12 +192,8 @@ RETRIEVED DATABASE CONTEXT:
         # Call Ollama Chat API
         response = ollama.chat(model=model, messages=messages)
         answer = response.message.content
-        
-        return {
-            "response": answer,
-            "data_context": context,
-            "model": model
-        }
+
+        return {"response": answer, "data_context": context, "model": model}
     except Exception as e:
         logger.error("Ollama chat failed: %s", e)
         error_msg = (
@@ -173,8 +202,4 @@ RETRIEVED DATABASE CONTEXT:
             "1. Make sure Ollama is running (`bash scripts/init_ollama.sh`)\n"
             "2. Confirm the selected model is pulled on your system"
         )
-        return {
-            "response": error_msg,
-            "data_context": context,
-            "model": model
-        }
+        return {"response": error_msg, "data_context": context, "model": model}

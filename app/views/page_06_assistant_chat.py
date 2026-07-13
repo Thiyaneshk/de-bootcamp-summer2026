@@ -5,8 +5,9 @@ Interactive Chat Interface using Streamlit conversational UI and RAG over
 PostgreSQL database tables.
 """
 
-import streamlit as st
 import ollama
+import streamlit as st
+
 from app.core.rag.chat_engine import chat_with_rag
 
 
@@ -24,7 +25,7 @@ def get_available_models() -> list[str]:
 
 def main():
     """AI analyst chat page."""
-    
+
     st.markdown(
         """
         <div style="
@@ -43,23 +44,23 @@ def main():
 
     # ── Sidebar Settings ──────────────────────────────────────────────────────
     st.sidebar.markdown("### ⚙️ Analyst Configuration")
-    
+
     models = get_available_models()
     selected_model = st.sidebar.selectbox(
         "Select LLM Model",
         options=models,
         index=0,
-        help="Models currently pulled in your Ollama installation"
+        help="Models currently pulled in your Ollama installation",
     )
-    
+
     context_days = st.sidebar.slider(
         "Context History (Days)",
         min_value=3,
         max_value=30,
         value=10,
-        help="Number of historical price/indicator records to fetch for mentioned symbols"
+        help="Number of historical price/indicator records to fetch for mentioned symbols",
     )
-    
+
     if st.sidebar.button("🧹 Clear Chat History", type="secondary"):
         st.session_state.chat_history = []
         st.success("Chat history cleared!")
@@ -68,7 +69,7 @@ def main():
     # ── Quick Presets ────────────────────────────────────────────────────────
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 💡 Sample Questions")
-    
+
     preset_query = None
     if st.sidebar.button("📈 Latest market snapshot"):
         preset_query = "Give me a summary of the latest close price and volume for all stocks in the database."
@@ -86,19 +87,17 @@ def main():
     # Display welcome message if history is empty
     if not st.session_state.chat_history:
         with st.chat_message("assistant"):
-            st.markdown(
-                """
-                Hello! I am **Antigravity**, your local AI Financial Analyst. 
+            st.markdown("""
+                Hello! I am **Antigravity**, your local AI Financial Analyst.
                 I have real-time access to the PostgreSQL database schemas containing raw prices, staging models, and dbt indicator tables.
-                
+
                 You can ask me questions like:
                 * *'What was the close price of AAPL over the last 5 days?'*
                 * *'Is MSFT currently in a bullish or bearish moving average phase?'*
                 * *'Are there any technical indicators or volatility spikes on LUPIN.NS?'*
-                
+
                 How can I assist your market research today?
-                """
-            )
+                """)
 
     # Render previous logs
     for message in st.session_state.chat_history:
@@ -124,28 +123,32 @@ def main():
         with st.chat_message("assistant"):
             with st.spinner("Analyzing PostgreSQL data and thinking..."):
                 result = chat_with_rag(
-                    query=query, 
-                    model=selected_model, 
-                    chat_history=st.session_state.chat_history[:-1], # pass previous history
-                    days_limit=context_days
+                    query=query,
+                    model=selected_model,
+                    chat_history=st.session_state.chat_history[
+                        :-1
+                    ],  # pass previous history
+                    days_limit=context_days,
                 )
-                
+
             response_text = result["response"]
             data_context = result["data_context"]
-            
+
             st.write(response_text)
-            
+
             # Show SQL context
             if data_context:
                 with st.expander("📊 Retained SQL context for this response"):
                     st.code(data_context, language="markdown")
-                    
+
         # Append assistant message with context
-        st.session_state.chat_history.append({
-            "role": "assistant",
-            "content": response_text,
-            "data_context": data_context
-        })
+        st.session_state.chat_history.append(
+            {
+                "role": "assistant",
+                "content": response_text,
+                "data_context": data_context,
+            }
+        )
 
 
 if __name__ == "__main__":
