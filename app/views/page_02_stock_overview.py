@@ -2,13 +2,6 @@
 Phase 1: Stock Overview
 
 Real-time stock data viewer with charts.
-
-TODO: Implement:
-- Symbol selector
-- Date range picker
-- Load data from yfinance
-- Display OHLCV data
-- Plotly candlestick chart
 """
 
 from datetime import date, timedelta
