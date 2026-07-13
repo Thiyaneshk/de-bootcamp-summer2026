@@ -1,17 +1,19 @@
 """
 Phase 3 / Phase 4: Technical Indicators
 
-Display dbt-generated technical indicators (SMA 20, SMA 50, EMA 50, EMA 200) 
+Display dbt-generated technical indicators (SMA 20, SMA 50, EMA 50, EMA 200)
 from the PostgreSQL database.
 """
 
 import io
 import logging
 from datetime import date, timedelta
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from sqlalchemy import text
+
 from app.db.connection import get_postgres_engine
 
 logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ def load_indicator_data(symbol: str) -> pd.DataFrame:
     """Load indicators data for a symbol from PostgreSQL."""
     try:
         query = """
-            SELECT 
+            SELECT
                 timestamp,
                 close,
                 sma_20,
@@ -67,7 +69,7 @@ def detect_crossovers(df: pd.DataFrame) -> list[dict]:
     df = df.copy()
     df["sma_diff"] = df["sma_20"] - df["sma_50"]
     df["sma_diff_prev"] = df["sma_diff"].shift(1)
-    
+
     # EMA 50 vs EMA 200
     df["ema_diff"] = df["ema_50"] - df["ema_200"]
     df["ema_diff_prev"] = df["ema_diff"].shift(1)
@@ -75,7 +77,7 @@ def detect_crossovers(df: pd.DataFrame) -> list[dict]:
     for i in range(1, len(df)):
         row = df.iloc[i]
         date_str = row["timestamp"].strftime("%Y-%m-%d")
-        
+
         # SMA Golden / Death Cross
         if pd.notna(row["sma_diff"]) and pd.notna(row["sma_diff_prev"]):
             if row["sma_diff"] > 0 >= row["sma_diff_prev"]:
@@ -113,13 +115,13 @@ def detect_crossovers(df: pd.DataFrame) -> list[dict]:
                     "desc": f"EMA 50 crossed below EMA 200 at {row['close']:.2f}",
                     "is_bullish": False
                 })
-                
+
     return sorted(events, key=lambda x: x["timestamp"], reverse=True)
 
 
 def main():
     """Technical indicators page."""
-    
+
     st.markdown(
         """
         <div style="
@@ -137,7 +139,7 @@ def main():
     )
 
     symbols = load_indicators_symbols()
-    
+
     if not symbols:
         st.warning(
             "⚠️ No technical indicators data found in PostgreSQL. "
@@ -153,7 +155,7 @@ def main():
 
     # Sidebar / filters layout
     col_sym, col_start, col_end = st.columns([2, 2, 2])
-    
+
     with col_sym:
         selected_symbol = st.selectbox(
             "Select Symbol",
@@ -161,14 +163,14 @@ def main():
             index=0,
             help="Choose a symbol to analyze"
         )
-        
+
     with col_start:
         start_date = st.date_input(
             "Start Date",
             value=date.today() - timedelta(days=90),
             help="Show data starting from this date"
         )
-        
+
     with col_end:
         end_date = st.date_input(
             "End Date",
@@ -183,30 +185,30 @@ def main():
     # Load data
     with st.spinner(f"Loading indicators for {selected_symbol}..."):
         raw_df = load_indicator_data(selected_symbol)
-        
+
     if raw_df.empty:
         st.warning(f"No records found for symbol {selected_symbol} in database.")
         return
 
     # Filter data by date range
     df = raw_df[(raw_df["timestamp"].dt.date >= start_date) & (raw_df["timestamp"].dt.date <= end_date)].copy()
-    
+
     if df.empty:
         st.warning(f"No data available for {selected_symbol} in the selected date range ({start_date} to {end_date}).")
         return
 
     latest_row = df.iloc[-1]
-    
+
     # ── KPI Cards ────────────────────────────────────────────────────────────
     st.markdown("### 📈 Current Trend & Signals")
     kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
-    
+
     # Close price
     kpi_col1.metric(
         label=f"{selected_symbol} Close",
         value=f"{latest_row['close']:.2f}"
     )
-    
+
     # SMA Crossover status
     sma_diff = latest_row["sma_20"] - latest_row["sma_50"] if pd.notna(latest_row["sma_20"]) and pd.notna(latest_row["sma_50"]) else None
     if sma_diff is not None:
@@ -219,7 +221,7 @@ def main():
         )
     else:
         kpi_col2.metric(label="SMA 20/50 Signal", value="No Data")
-        
+
     # EMA Crossover status
     ema_diff = latest_row["ema_50"] - latest_row["ema_200"] if pd.notna(latest_row["ema_50"]) and pd.notna(latest_row["ema_200"]) else None
     if ema_diff is not None:
@@ -232,7 +234,7 @@ def main():
         )
     else:
         kpi_col3.metric(label="EMA 50/200 Signal", value="No Data")
-        
+
     # Position relative to EMA 200
     price_vs_ema200 = latest_row["close"] - latest_row["ema_200"] if pd.notna(latest_row["ema_200"]) else None
     if price_vs_ema200 is not None:
@@ -250,7 +252,7 @@ def main():
 
     # ── Interactive Plotly Chart ─────────────────────────────────────────────
     st.markdown("### 📊 Interactive Technical Chart")
-    
+
     # Toggle which indicators to draw
     indicators_to_plot = st.multiselect(
         "Indicators to Overlay",
@@ -260,7 +262,7 @@ def main():
     )
 
     fig = go.Figure()
-    
+
     # Add Close Price
     fig.add_trace(go.Scatter(
         x=df["timestamp"],
@@ -278,7 +280,7 @@ def main():
         "EMA 50": ("#10b981", "solid"),   # Emerald
         "EMA 200": ("#8b5cf6", "solid")   # Violet
     }
-    
+
     col_mapping = {
         "SMA 20": "sma_20",
         "SMA 50": "sma_50",
@@ -317,45 +319,45 @@ def main():
             bgcolor="rgba(15, 23, 42, 0.5)"
         )
     )
-    
+
     st.plotly_chart(fig, use_container_width=True)
 
     # ── Tabs for Signals and Tables ──────────────────────────────────────────
     tab_signals, tab_data = st.tabs(["⚡ Crossover Signal History", "📋 Raw Data Table"])
-    
+
     with tab_signals:
         st.markdown("#### Detected Moving Average Crossovers")
         st.markdown(
             "Crossovers are classic technical triggers. A **Golden Cross** occurs when a shorter-term moving average "
             "crosses above a longer-term one (Bullish). A **Death Cross** is the opposite (Bearish)."
         )
-        
+
         crossover_events = detect_crossovers(df)
         if not crossover_events:
             st.info("No crossover events detected in the selected time range.")
         else:
             for ev in crossover_events[:15]: # Show top 15 events
-                badge_color = "success" if ev["is_bullish"] else "danger"
+                "success" if ev["is_bullish"] else "danger"
                 st.markdown(
                     f"**{ev['date']}** · "
                     f"<span style='color:{'#10b981' if ev['is_bullish'] else '#ef4444'}; font-weight:bold;'>{ev['type']}</span> · "
                     f"{ev['desc']}",
                     unsafe_allow_html=True
                 )
-                
+
     with tab_data:
         st.markdown(f"#### Calculated Indicators for {selected_symbol}")
-        
+
         # Display data frame
         disp_df = df.copy()
         disp_df["date"] = disp_df["timestamp"].dt.strftime("%Y-%m-%d")
         disp_df = disp_df[["date", "close", "sma_20", "sma_50", "ema_50", "ema_200"]]
-        
+
         for col in ["close", "sma_20", "sma_50", "ema_50", "ema_200"]:
             disp_df[col] = disp_df[col].round(4)
-            
+
         st.dataframe(disp_df.set_index("date"), use_container_width=True, height=300)
-        
+
         # CSV download
         csv_buf = io.StringIO()
         disp_df.to_csv(csv_buf, index=False)

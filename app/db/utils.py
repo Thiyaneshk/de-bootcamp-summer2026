@@ -5,7 +5,6 @@ Helper functions for database operations — DuckDB and PostgreSQL.
 """
 
 import logging
-import os
 
 from sqlalchemy import text
 

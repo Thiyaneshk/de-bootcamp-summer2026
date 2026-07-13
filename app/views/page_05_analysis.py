@@ -1,19 +1,20 @@
 """
 Phase 4: Analytics & Insights
 
-Advanced analytics, comparative charts, volatility metrics, volume spikes, 
+Advanced analytics, comparative charts, volatility metrics, volume spikes,
 and daily return correlation heatmaps.
 """
 
-import io
 import logging
 from datetime import date, timedelta
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from sqlalchemy import text
+
 from app.db.connection import get_postgres_engine
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def load_daily_prices(symbols: list[str]) -> pd.DataFrame:
         return pd.DataFrame()
     try:
         query = """
-            SELECT 
+            SELECT
                 symbol,
                 date,
                 daily_open,
@@ -65,7 +66,7 @@ def load_daily_prices(symbols: list[str]) -> pd.DataFrame:
 
 def main():
     """Analytics page."""
-    
+
     st.markdown(
         """
         <div style="
@@ -83,7 +84,7 @@ def main():
     )
 
     all_symbols = load_analysis_symbols()
-    
+
     if not all_symbols:
         st.warning(
             "⚠️ No daily price data found in PostgreSQL. "
@@ -99,7 +100,7 @@ def main():
 
     # Filter selections
     col_sym, col_start, col_end = st.columns([3, 2, 2])
-    
+
     with col_sym:
         selected_symbols = st.multiselect(
             "Select Symbols",
@@ -107,14 +108,14 @@ def main():
             default=all_symbols[:3] if len(all_symbols) >= 3 else all_symbols,
             help="Select one or more symbols to analyze and compare"
         )
-        
+
     with col_start:
         start_date = st.date_input(
             "Start Date",
             value=date.today() - timedelta(days=90),
             help="Show data starting from this date"
         )
-        
+
     with col_end:
         end_date = st.date_input(
             "End Date",
@@ -156,19 +157,19 @@ def main():
     df_primary = df[df["symbol"] == primary_symbol].sort_values("date")
 
     st.markdown(f"### 🎯 Primary Symbol: **{primary_symbol}** Key Stats")
-    
+
     if not df_primary.empty:
         kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
-        
+
         latest_row = df_primary.iloc[-1]
         earliest_row = df_primary.iloc[0]
-        
+
         # Current Price
         kpi_col1.metric(
             label=f"{primary_symbol} Price",
             value=f"{latest_row['daily_close']:.2f}"
         )
-        
+
         # 7-day change
         target_7d = latest_row["date"] - timedelta(days=7)
         df_7d = df_primary[df_primary["date"] <= target_7d]
@@ -188,7 +189,7 @@ def main():
                 value=f"{perf_period:+.2f}%",
                 delta=f"{latest_row['daily_close'] - earliest_row['daily_close']:.2f}"
             )
-            
+
         # 30-day (or period) High/Low
         high_30d = df_primary["daily_high"].max()
         low_30d = df_primary["daily_low"].min()
@@ -196,7 +197,7 @@ def main():
             label="Period Range (High / Low)",
             value=f"{high_30d:.2f} / {low_30d:.2f}"
         )
-        
+
         # Average volume
         avg_vol = df_primary["daily_volume"].mean()
         kpi_col4.metric(
@@ -210,8 +211,8 @@ def main():
 
     # ── Tabs: Charts ──────────────────────────────────────────────────────────
     tab_perf, tab_vol, tab_vol_spikes, tab_corr = st.tabs([
-        "📈 Performance Comparison", 
-        "⚡ Volatility Profile", 
+        "📈 Performance Comparison",
+        "⚡ Volatility Profile",
         "⚠️ Volume Spike Alerts",
         "🧮 Correlation Heatmap"
     ])
@@ -223,7 +224,7 @@ def main():
             "This chart compares the cumulative return (%) of the selected stocks starting from the baseline "
             f"on **{start_date}** (initial close price is normalized to 0%)."
         )
-        
+
         fig_perf = go.Figure()
         for sym in selected_symbols:
             df_sym = df[df["symbol"] == sym].sort_values("date")
@@ -237,7 +238,7 @@ def main():
                 line=dict(width=2.2),
                 hovertemplate=f"<b>{sym}</b>: %{{y:+.2f}}%<extra></extra>"
             ))
-            
+
         fig_perf.update_layout(
             template="plotly_dark",
             hovermode="x unified",
@@ -263,9 +264,9 @@ def main():
     # TAB 2: Volatility Profile
     with tab_vol:
         st.markdown("#### Volatility Metrics & Rolling Risk")
-        
+
         v_col1, v_col2 = st.columns([1, 2])
-        
+
         # Calculate daily and annualized volatility per symbol
         vol_data = []
         for sym in selected_symbols:
@@ -279,18 +280,18 @@ def main():
                 "Daily Volatility (%)": round(daily_vol, 3),
                 "Annualized Volatility (%)": round(ann_vol, 2)
             })
-            
+
         vol_df = pd.DataFrame(vol_data)
-        
+
         with v_col1:
             st.markdown("**Volatility Comparison**")
             if not vol_df.empty:
                 st.dataframe(vol_df.set_index("Symbol"), use_container_width=True)
-                
+
                 # Volatility Bar Chart
                 fig_vol = px.bar(
-                    vol_df, 
-                    x="Symbol", 
+                    vol_df,
+                    x="Symbol",
                     y="Annualized Volatility (%)",
                     color="Symbol",
                     title="Annualized Volatility comparison",
@@ -306,10 +307,10 @@ def main():
                 st.plotly_chart(fig_vol, use_container_width=True)
             else:
                 st.info("Not enough data to calculate volatility.")
-                
+
         with v_col2:
             st.markdown("**20-Day Rolling Volatility Trend (Annualized)**")
-            
+
             fig_roll = go.Figure()
             for sym in selected_symbols:
                 df_sym = df[df["symbol"] == sym].sort_values("date").copy()
@@ -318,7 +319,7 @@ def main():
                 # Rolling std * 100 * sqrt(252)
                 df_sym["rolling_vol"] = df_sym["daily_return"].rolling(20).std() * 100 * np.sqrt(252)
                 df_sym = df_sym.dropna(subset=["rolling_vol"])
-                
+
                 fig_roll.add_trace(go.Scatter(
                     x=df_sym["date"],
                     y=df_sym["rolling_vol"],
@@ -327,7 +328,7 @@ def main():
                     line=dict(width=2),
                     hovertemplate=f"<b>{sym} Rolling Vol</b>: %{{y:.2f}}%<extra></extra>"
                 ))
-                
+
             fig_roll.update_layout(
                 template="plotly_dark",
                 hovermode="x unified",
@@ -358,19 +359,19 @@ def main():
             "Below are dates where the daily trading volume exceeded **2 standard deviations** "
             "above the symbol's rolling average."
         )
-        
+
         all_spikes = []
         for sym in selected_symbols:
             df_sym = df[df["symbol"] == sym].sort_values("date").copy()
             if df_sym.empty or len(df_sym) < 10:
                 continue
-            
+
             mean_vol = df_sym["daily_volume"].mean()
             std_vol = df_sym["daily_volume"].std()
             threshold = mean_vol + 2 * std_vol
-            
+
             spikes = df_sym[df_sym["daily_volume"] > threshold]
-            
+
             for _, r in spikes.iterrows():
                 ratio = r["daily_volume"] / mean_vol
                 all_spikes.append({
@@ -382,9 +383,9 @@ def main():
                     "ratio": ratio,
                     "desc": f"Volume spike of <b>{int(r['daily_volume']):,}</b> shares (<b>{ratio:.1f}x</b> the period average of {int(mean_vol):,})"
                 })
-                
+
         all_spikes = sorted(all_spikes, key=lambda x: x["timestamp"], reverse=True)
-        
+
         if not all_spikes:
             st.info("No unusual volume spikes detected in the selected time range.")
         else:
@@ -393,7 +394,7 @@ def main():
                     f"📅 **{spike['date']}** · **{spike['symbol']}** · {spike['desc']}",
                     unsafe_allow_html=True
                 )
-                
+
         # Interactive Volume Trend Chart
         st.markdown("---")
         st.markdown("**Volume History Over Time**")
@@ -408,7 +409,7 @@ def main():
                 name=sym,
                 hovertemplate=f"<b>{sym} Volume</b>: %{{y:,}}<extra></extra>"
             ))
-            
+
         fig_vol_hist.update_layout(
             template="plotly_dark",
             barmode="group",
@@ -434,16 +435,16 @@ def main():
     # TAB 4: Correlation Heatmap
     with tab_corr:
         st.markdown("#### Cross-Symbol Daily Returns Correlation Matrix")
-        
+
         if len(selected_symbols) < 2:
             st.warning("⚠️ Please select 2 or more symbols to display the correlation heatmap.")
         else:
             # Pivot to get returns per symbol per date
             pivot_df = df.pivot(index="date", columns="symbol", values="daily_return")
-            
+
             # Compute correlation matrix
             corr_matrix = pivot_df.corr().round(4)
-            
+
             # Plotly Heatmap
             fig_heat = px.imshow(
                 corr_matrix,
@@ -454,7 +455,7 @@ def main():
                 labels=dict(color="Correlation"),
                 template="plotly_dark"
             )
-            
+
             fig_heat.update_layout(
                 title=dict(
                     text="Correlation of Daily Returns",
@@ -466,7 +467,7 @@ def main():
                 margin=dict(l=40, r=40, t=60, b=40),
                 height=450
             )
-            
+
             st.plotly_chart(fig_heat, use_container_width=True)
 
 

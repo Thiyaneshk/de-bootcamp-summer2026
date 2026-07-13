@@ -11,9 +11,10 @@ TODO: Implement:
 - Plotly candlestick chart
 """
 
-import streamlit as st
-import plotly.graph_objects as go
 from datetime import date, timedelta
+
+import plotly.graph_objects as go
+import streamlit as st
 
 from app.core.etl.prices import load_prices_daily
 
@@ -60,7 +61,7 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("Set a symbol and date range, then click Load")
-    
+
 
 if __name__ == "__main__":
     main()
