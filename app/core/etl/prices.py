@@ -11,6 +11,7 @@ TODO: Implement yfinance wrapper functions:
 
 import pandas as pd
 import yfinance as yf
+from app.core.cache.redis_cache import redis_cache
 
 from app.core.cache.redis_cache import redis_cache
 
