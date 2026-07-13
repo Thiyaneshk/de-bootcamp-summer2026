@@ -117,8 +117,6 @@ def download_multiple_symbols(
 
     Returns:
         Dictionary mapping symbol to DataFrame
-
-    TODO: Implement logic with parallel downloads
     """
     # Use yfinance to download multiple symbols at daily interval and return dict
     if not symbols:
