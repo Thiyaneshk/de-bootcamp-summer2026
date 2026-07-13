@@ -11,8 +11,10 @@ TODO: Implement yfinance wrapper functions:
 
 import pandas as pd
 import yfinance as yf
+from app.core.cache.redis_cache import redis_cache
 
 
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_5m(
     symbol: str,
     start_date: str = None,
@@ -21,16 +23,16 @@ def load_prices_5m(
 ) -> pd.DataFrame:
     """
     Load 5-minute interval price data from yfinance.
-    
+
     Args:
         symbol: Stock symbol (e.g., "AAPL", "BTC-USD")
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         progress: Show download progress bar
-    
+
     Returns:
         DataFrame with columns: Open, High, Low, Close, Volume
-        
+
     TODO: Implement logic
     """
     # Delegate to yfinance with 5m interval. Keep simple for phase 1.
@@ -51,6 +53,7 @@ def load_prices_5m(
     return data[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]]
 
 
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_daily(
     symbol: str,
     start_date: str = None,
@@ -59,16 +62,16 @@ def load_prices_daily(
 ) -> pd.DataFrame:
     """
     Load daily price data from yfinance.
-    
+
     Args:
         symbol: Stock symbol
         start_date: Start date (YYYY-MM-DD)
         end_date: End date (YYYY-MM-DD)
         period: Period (1d, 5d, 1mo, 3mo, 6mo, 1y, etc.)
-    
+
     Returns:
         DataFrame with daily OHLCV data
-        
+
     TODO: Implement logic
     """
     params: dict = {}
@@ -104,15 +107,15 @@ def download_multiple_symbols(
 ) -> dict[str, pd.DataFrame]:
     """
     Download data for multiple symbols.
-    
+
     Args:
         symbols: List of stock symbols
         start_date: Start date
         end_date: End date
-    
+
     Returns:
         Dictionary mapping symbol to DataFrame
-        
+
     TODO: Implement logic with parallel downloads
     """
     # Use yfinance to download multiple symbols at daily interval and return dict
