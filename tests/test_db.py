@@ -20,7 +20,6 @@ from app.db.connection import get_db_engine
 
 def test_duckdb_connection():
     """Test DuckDB connection."""
-
     # create a random path instead of NamedTemporaryFile to avoid "not a valid DuckDB" when it touches an empty file
     import uuid
     db_path = f"/tmp/{uuid.uuid4()}.duckdb"
@@ -52,8 +51,6 @@ def test_duckdb_connection():
 
 def test_insert_prices():
     """Test inserting price data."""
-    import duckdb
-
     conn = duckdb.connect(":memory:")
     conn.execute('''
         CREATE TABLE prices (

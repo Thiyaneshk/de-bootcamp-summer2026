@@ -1,7 +1,9 @@
 """Snowflake connection — production data warehouse for Phase 7+."""
 import os
-import snowflake.connector
+
 import pandas as pd
+import snowflake.connector
+
 
 def get_snowflake_connection():
     return snowflake.connector.connect(

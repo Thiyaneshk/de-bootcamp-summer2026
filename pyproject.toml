@@ -49,6 +49,11 @@ phase5 = [
     "langchain>=0.1.0",
 ]
 
+# Phase 6: Redis Distributed Caching
+phase6 = [
+    "redis>=5.0.0",
+]
+
 # Phase 7: Snowflake Cloud Data Warehouse
 phase7 = [
     "snowflake-connector-python>=3.6.0",
@@ -92,3 +97,27 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+
+[lint]
+extend-select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "N",
+    "UP",
+]
+ignore = [
+    "E501",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "dbt_packages",
+    ".dbt",
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
