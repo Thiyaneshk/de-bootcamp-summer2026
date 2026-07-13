@@ -11,8 +11,10 @@ TODO: Implement yfinance wrapper functions:
 
 import pandas as pd
 import yfinance as yf
+from app.core.cache.redis_cache import redis_cache
 
 
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_5m(
     symbol: str,
     start_date: str = None,
@@ -51,6 +53,7 @@ def load_prices_5m(
     return data[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]]
 
 
+@redis_cache(ttl=300, prefix="prices")
 def load_prices_daily(
     symbol: str,
     start_date: str = None,

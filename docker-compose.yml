@@ -206,6 +206,24 @@ services:
     profiles:
       - phase5
 
+  # ── Redis Cache (Phase 6) ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: bootcamp_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - de-network
+    restart: unless-stopped
+
 networks:
   de-network:
     driver: bridge
@@ -215,3 +233,4 @@ volumes:
   airflow_logs:
   duckdb_data:
   ollama_data:
+  redis_data:
