@@ -11,8 +11,8 @@ from datetime import datetime
 from airflow import DAG
 
 dag = DAG(
-    'example_placeholder_dag',
-    description='Placeholder DAG for testing',
+    "example_placeholder_dag",
+    description="Placeholder DAG for testing",
     schedule_interval=None,
     start_date=datetime(2026, 5, 1),
     catchup=False,

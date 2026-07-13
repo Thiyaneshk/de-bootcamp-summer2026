@@ -45,6 +45,7 @@ logger = logging.getLogger(__name__)
 # Helper: load symbols from config/symbols.toml
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def _get_symbols() -> list[str]:
     import tomllib
 
@@ -67,6 +68,7 @@ def _get_symbols() -> list[str]:
 # ─────────────────────────────────────────────────────────────────────────────
 # Task 1: Download from yfinance → push raw data via XCom
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def download_prices(**context) -> dict:
     """
@@ -93,7 +95,11 @@ def download_prices(**context) -> dict:
             logger.error("  ✗ %s: download failed — %s", sym, e)
 
     total = sum(results.values())
-    logger.info("Task 1 complete — %d total rows downloaded across %d symbols", total, len(symbols))
+    logger.info(
+        "Task 1 complete — %d total rows downloaded across %d symbols",
+        total,
+        len(symbols),
+    )
 
     # Push to XCom for downstream tasks
     context["ti"].xcom_push(key="symbols", value=symbols)
@@ -106,6 +112,7 @@ def download_prices(**context) -> dict:
 # Task 2: Store downloaded data into DuckDB
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def store_to_duckdb(**context) -> dict:
     """
     Pull fresh data from yfinance (again) and upsert into local DuckDB.
@@ -115,7 +122,10 @@ def store_to_duckdb(**context) -> dict:
     from app.db.connection import get_duckdb_connection
     from app.db.utils import create_prices_table, insert_prices
 
-    symbols = context["ti"].xcom_pull(key="symbols", task_ids="download_prices") or _get_symbols()
+    symbols = (
+        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+        or _get_symbols()
+    )
     logger.info("Task 2 — storing %d symbols to DuckDB", len(symbols))
 
     total_upserted = 0
@@ -131,13 +141,13 @@ def store_to_duckdb(**context) -> dict:
 
                 records = [
                     {
-                        "symbol":    sym,
+                        "symbol": sym,
                         "timestamp": idx.to_pydatetime(),
-                        "open":      float(row.get("Open", 0) or 0),
-                        "high":      float(row.get("High", 0) or 0),
-                        "low":       float(row.get("Low", 0) or 0),
-                        "close":     float(row.get("Close", 0) or 0),
-                        "volume":    int(row.get("Volume", 0) or 0),
+                        "open": float(row.get("Open", 0) or 0),
+                        "high": float(row.get("High", 0) or 0),
+                        "low": float(row.get("Low", 0) or 0),
+                        "close": float(row.get("Close", 0) or 0),
+                        "volume": int(row.get("Volume", 0) or 0),
                     }
                     for idx, row in df.iterrows()
                 ]
@@ -158,6 +168,7 @@ def store_to_duckdb(**context) -> dict:
 # Task 3: Push DuckDB data → PostgreSQL
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def push_to_postgres(**context) -> dict:
     """
     Read data from DuckDB and upsert into PostgreSQL prices table.
@@ -176,7 +187,10 @@ def push_to_postgres(**context) -> dict:
 
     from scripts.pg_loader import fetch_from_duckdb
 
-    symbols = context["ti"].xcom_pull(key="symbols", task_ids="download_prices") or _get_symbols()
+    symbols = (
+        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+        or _get_symbols()
+    )
     logger.info("Task 3 — pushing DuckDB → PostgreSQL for: %s", symbols)
 
     # Fetch last 30 days from DuckDB
@@ -190,7 +204,9 @@ def push_to_postgres(**context) -> dict:
     try:
         # Ensure prices table exists in PostgreSQL
         with engine.begin() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 CREATE TABLE IF NOT EXISTS prices (
                     symbol    VARCHAR(20)  NOT NULL,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -201,12 +217,16 @@ def push_to_postgres(**context) -> dict:
                     volume    BIGINT,
                     PRIMARY KEY (symbol, timestamp)
                 )
-            """))
+            """
+                )
+            )
 
         # Upsert via staging temp table
         with engine.begin() as conn:
             df.to_sql("prices_etl_tmp", conn, if_exists="replace", index=False)
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_etl_tmp
@@ -216,7 +236,9 @@ def push_to_postgres(**context) -> dict:
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """))
+            """
+                )
+            )
             conn.execute(text("DROP TABLE IF EXISTS prices_etl_tmp"))
 
         pg_rows = len(df)
@@ -235,6 +257,7 @@ def push_to_postgres(**context) -> dict:
 # Task 4: Validate PostgreSQL
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def validate_postgres(**context) -> dict:
     """
     Assert that:
@@ -249,7 +272,10 @@ def validate_postgres(**context) -> dict:
 
     from sqlalchemy import create_engine, text
 
-    symbols = context["ti"].xcom_pull(key="symbols", task_ids="download_prices") or _get_symbols()
+    symbols = (
+        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+        or _get_symbols()
+    )
     engine = create_engine(postgres_url, pool_pre_ping=True)
 
     try:
@@ -259,9 +285,11 @@ def validate_postgres(**context) -> dict:
             logger.info("✓ PostgreSQL prices table: %d total rows", total)
 
             # Per-symbol counts
-            rows = conn.execute(text(
-                "SELECT symbol, COUNT(*) as cnt FROM prices GROUP BY symbol ORDER BY symbol"
-            )).fetchall()
+            rows = conn.execute(
+                text(
+                    "SELECT symbol, COUNT(*) as cnt FROM prices GROUP BY symbol ORDER BY symbol"
+                )
+            ).fetchall()
             pg_symbols = {r[0]: r[1] for r in rows}
             logger.info("✓ Symbol coverage: %s", pg_symbols)
 
@@ -273,7 +301,9 @@ def validate_postgres(**context) -> dict:
 
             # Assert total > 0
             if total == 0:
-                raise ValueError("Validation failed: prices table is empty in PostgreSQL!")
+                raise ValueError(
+                    "Validation failed: prices table is empty in PostgreSQL!"
+                )
 
         logger.info("Task 4 complete — validation passed ✅")
         return {"total_rows": total, "symbols": pg_symbols}
@@ -292,21 +322,21 @@ def validate_postgres(**context) -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 
 default_args = {
-    "owner":            "data-eng",
-    "retries":          2,
-    "retry_delay":      timedelta(minutes=5),
-    "start_date":       datetime(2026, 5, 1),
+    "owner": "data-eng",
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
+    "start_date": datetime(2026, 5, 1),
     "email_on_failure": False,
-    "depends_on_past":  False,
+    "depends_on_past": False,
 }
 
 with DAG(
     dag_id="etl_prices_dag",
     default_args=default_args,
     description="Daily ETL: yfinance → DuckDB → PostgreSQL",
-    schedule_interval="0 8 * * *",   # 08:00 UTC every day
+    schedule_interval="0 8 * * *",  # 08:00 UTC every day
     catchup=False,
-    max_active_runs=1,               # Prevent overlapping runs
+    max_active_runs=1,  # Prevent overlapping runs
     tags=["price-data", "yfinance", "duckdb", "postgres"],
 ) as dag:
 

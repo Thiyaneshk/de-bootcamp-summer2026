@@ -50,7 +50,7 @@ def main():
         "Select LLM Model",
         options=models,
         index=0,
-        help="Models currently pulled in your Ollama installation"
+        help="Models currently pulled in your Ollama installation",
     )
 
     context_days = st.sidebar.slider(
@@ -58,7 +58,7 @@ def main():
         min_value=3,
         max_value=30,
         value=10,
-        help="Number of historical price/indicator records to fetch for mentioned symbols"
+        help="Number of historical price/indicator records to fetch for mentioned symbols",
     )
 
     if st.sidebar.button("🧹 Clear Chat History", type="secondary"):
@@ -127,8 +127,10 @@ def main():
                 result = chat_with_rag(
                     query=query,
                     model=selected_model,
-                    chat_history=st.session_state.chat_history[:-1], # pass previous history
-                    days_limit=context_days
+                    chat_history=st.session_state.chat_history[
+                        :-1
+                    ],  # pass previous history
+                    days_limit=context_days,
                 )
 
             response_text = result["response"]
@@ -142,11 +144,13 @@ def main():
                     st.code(data_context, language="markdown")
 
         # Append assistant message with context
-        st.session_state.chat_history.append({
-            "role": "assistant",
-            "content": response_text,
-            "data_context": data_context
-        })
+        st.session_state.chat_history.append(
+            {
+                "role": "assistant",
+                "content": response_text,
+                "data_context": data_context,
+            }
+        )
 
 
 if __name__ == "__main__":

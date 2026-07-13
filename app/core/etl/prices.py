@@ -11,7 +11,6 @@ TODO: Implement yfinance wrapper functions:
 
 import pandas as pd
 import yfinance as yf
-from app.core.cache.redis_cache import redis_cache
 
 from app.core.cache.redis_cache import redis_cache
 
@@ -52,7 +51,9 @@ def load_prices_5m(
         # MultiIndex from yfinance is typically (Price, Ticker) — keep the Price level
         data.columns = data.columns.get_level_values(0)
     data.index = pd.to_datetime(data.index)
-    return data[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]]
+    return data[
+        [c for c in ["Open", "High", "Low", "Close", "Volume"] if c in data.columns]
+    ]
 
 
 @redis_cache(ttl=300, prefix="prices")
@@ -134,12 +135,24 @@ def download_multiple_symbols(
                 if isinstance(sub.columns, pd.MultiIndex):
                     sub.columns = sub.columns.get_level_values(0)
                 sub.index = pd.to_datetime(sub.index)
-                results[sym] = sub[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in sub.columns]]
+                results[sym] = sub[
+                    [
+                        c
+                        for c in ["Open", "High", "Low", "Close", "Volume"]
+                        if c in sub.columns
+                    ]
+                ]
     else:
         # Single table returned: same for all symbols input (unlikely)
         flat = data
         flat.index = pd.to_datetime(flat.index)
         for sym in symbols:
-            results[sym] = flat[[c for c in ["Open", "High", "Low", "Close", "Volume"] if c in flat.columns]]
+            results[sym] = flat[
+                [
+                    c
+                    for c in ["Open", "High", "Low", "Close", "Volume"]
+                    if c in flat.columns
+                ]
+            ]
 
     return results
