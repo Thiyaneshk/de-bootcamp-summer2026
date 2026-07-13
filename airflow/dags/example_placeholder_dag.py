@@ -20,4 +20,3 @@ dag = DAG(
 
 
 # TODO: Define placeholder tasks
-# task1 = BashOperator(task_id='echo_hello', bash_command='echo "Hello from Airflow"', dag=dag)
