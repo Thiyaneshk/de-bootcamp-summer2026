@@ -18,7 +18,6 @@ from sqlalchemy.engine import Engine
 load_dotenv()
 
 
-
 @contextmanager
 def get_duckdb_connection():
     """

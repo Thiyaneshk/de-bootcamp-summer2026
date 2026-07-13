@@ -46,7 +46,10 @@ class AppConfig:
                 return config_data.get("default", {}).get("symbols", [])
         except Exception as e:
             import logging
-            logging.getLogger(__name__).warning("Failed to load symbols from symbols.toml: %s", e)
+
+            logging.getLogger(__name__).warning(
+                "Failed to load symbols from symbols.toml: %s", e
+            )
 
         # Fallback list if symbols.toml can't be read
         return ["AAPL", "MSFT", "ITC.NS", "LUPIN.NS"]
@@ -55,4 +58,3 @@ class AppConfig:
     def use_postgres(self) -> bool:
         """Check if PostgreSQL should be used instead of DuckDB."""
         return bool(self.postgres_url)
-
