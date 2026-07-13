@@ -1,4 +1,5 @@
 """Redis cache wrapper replacing @st.cache_data for distributed caching."""
+
 import hashlib
 import os
 import pickle
@@ -7,6 +8,7 @@ from functools import wraps
 import redis
 
 _client = None
+
 
 def get_redis_client() -> redis.Redis:
     global _client
@@ -19,8 +21,10 @@ def get_redis_client() -> redis.Redis:
         )
     return _client
 
+
 def redis_cache(ttl: int = 300, prefix: str = "bootcamp"):
     """Decorator: cache function result in Redis with given TTL (seconds)."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -37,5 +41,7 @@ def redis_cache(ttl: int = 300, prefix: str = "bootcamp"):
             except redis.exceptions.ConnectionError:
                 # Fallback to computing without cache if Redis is unavailable
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

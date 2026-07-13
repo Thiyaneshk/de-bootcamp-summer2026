@@ -24,17 +24,17 @@ from app.db.utils import create_prices_table
 
 def init_database():
     """Initialize PostgreSQL database schema."""
-    logging.info('Initializing database schema')
+    logging.info("Initializing database schema")
     # Create tables using DB engine
     with get_db_engine() as engine:
         try:
             create_prices_table(engine)
-            logging.info('Created or verified prices table')
+            logging.info("Created or verified prices table")
         except Exception as e:
-            logging.exception('Failed to create prices table: %s', e)
+            logging.exception("Failed to create prices table: %s", e)
 
-    logging.info('Database initialization complete')
+    logging.info("Database initialization complete")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_database()

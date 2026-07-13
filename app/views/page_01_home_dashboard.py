@@ -19,7 +19,7 @@ PHASES = [
         "time": "1–2 hours",
         "tech": "Python · Streamlit · yfinance · DuckDB · Plotly",
         "nav_page": "Stock Overview",
-        "status": "completed",   # completed | in_progress | not_started
+        "status": "completed",  # completed | in_progress | not_started
         "tasks": [
             ("Pull financial data from yfinance", True),
             ("ETL wrapper functions (load_prices_daily, load_prices_5m)", True),
@@ -50,7 +50,10 @@ PHASES = [
             ("init_db.py – PostgreSQL schema creation", True),
             ("pg_loader.py – DuckDB → PostgreSQL ETL helper", True),
             ("schedule_pg_sync.py – daily sync scheduler", True),
-            ("Airflow DAG: 4-task pipeline (download→DuckDB→PostgreSQL→validate)", True),
+            (
+                "Airflow DAG: 4-task pipeline (download→DuckDB→PostgreSQL→validate)",
+                True,
+            ),
             ("Test Airflow scheduler end-to-end", True),
             ("Airflow UI connection verified", True),
         ],
@@ -127,19 +130,19 @@ PHASES = [
 ]
 
 STATUS_META = {
-    "completed":    {"label": "✅ Completed",    "color": "#10b981", "bg": "#064e3b"},
-    "in_progress":  {"label": "🔶 In Progress",  "color": "#f59e0b", "bg": "#451a03"},
-    "not_started":  {"label": "⬜ Not Started",  "color": "#6b7280", "bg": "#1f2937"},
+    "completed": {"label": "✅ Completed", "color": "#10b981", "bg": "#064e3b"},
+    "in_progress": {"label": "🔶 In Progress", "color": "#f59e0b", "bg": "#451a03"},
+    "not_started": {"label": "⬜ Not Started", "color": "#6b7280", "bg": "#1f2937"},
 }
 
 QUICK_LINKS = [
-    ("📖 SETUP_COMMANDS.md",                  "SETUP_COMMANDS.md"),
-    ("📄 Phase 1 Docs",                        "docs/PHASE_1_STREAMLIT.md"),
-    ("📄 Phase 2 Docs (Airflow + Postgres)",   "docs/PHASE_2_AIRFLOW_POSTGRES.md"),
-    ("🐳 Phase 2 Docker Setup Guide",          "docs/PHASE_2_DOCKER_AIRFLOW_SETUP.md"),
-    ("📄 Phase 3 Docs",                        "docs/PHASE_3_DBT.md"),
-    ("📄 Phase 4 Docs",                        "docs/PHASE_4_ANALYTICS.md"),
-    ("📄 Phase 5 Docs",                        "docs/PHASE_5_LLM_RAG.md"),
+    ("📖 SETUP_COMMANDS.md", "SETUP_COMMANDS.md"),
+    ("📄 Phase 1 Docs", "docs/PHASE_1_STREAMLIT.md"),
+    ("📄 Phase 2 Docs (Airflow + Postgres)", "docs/PHASE_2_AIRFLOW_POSTGRES.md"),
+    ("🐳 Phase 2 Docker Setup Guide", "docs/PHASE_2_DOCKER_AIRFLOW_SETUP.md"),
+    ("📄 Phase 3 Docs", "docs/PHASE_3_DBT.md"),
+    ("📄 Phase 4 Docs", "docs/PHASE_4_ANALYTICS.md"),
+    ("📄 Phase 5 Docs", "docs/PHASE_5_LLM_RAG.md"),
 ]
 
 TECH_STACK = [
@@ -160,20 +163,21 @@ TRACKED_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "TSLA", "BTC-USD"]
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _progress_bar(done: int, total: int, color: str) -> str:
     pct = done / total if total else 0
     fill = int(pct * 100)
     return (
         f'<div style="background:#1f2937;border-radius:4px;height:8px;width:100%;margin:6px 0 2px">'
         f'<div style="background:{color};height:8px;border-radius:4px;width:{fill}%"></div>'
-        f'</div>'
+        f"</div>"
         f'<small style="color:{color}">{done}/{total} tasks · {fill}%</small>'
     )
 
 
 def _phase_card(phase: dict) -> None:
     meta = STATUS_META[phase["status"]]
-    done  = sum(1 for _, v in phase["tasks"] if v)
+    done = sum(1 for _, v in phase["tasks"] if v)
     total = len(phase["tasks"])
 
     with st.container():
@@ -221,6 +225,7 @@ def _phase_card(phase: dict) -> None:
 
 # ── Main page ────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     """Home dashboard – project status and learning roadmap."""
 
@@ -252,26 +257,28 @@ def main() -> None:
     )
 
     # ── Overall progress KPIs ───────────────────────────────────────────────
-    all_tasks  = [(done) for ph in PHASES for _, done in ph["tasks"]]
+    all_tasks = [(done) for ph in PHASES for _, done in ph["tasks"]]
     total_done = sum(all_tasks)
-    total_all  = len(all_tasks)
+    total_all = len(all_tasks)
 
-    completed_phases   = sum(1 for ph in PHASES if ph["status"] == "completed")
+    completed_phases = sum(1 for ph in PHASES if ph["status"] == "completed")
     in_progress_phases = sum(1 for ph in PHASES if ph["status"] == "in_progress")
     not_started_phases = sum(1 for ph in PHASES if ph["status"] == "not_started")
-    overall_pct        = int(total_done / total_all * 100) if total_all else 0
+    overall_pct = int(total_done / total_all * 100) if total_all else 0
 
     k1, k2, k3, k4, k5 = st.columns(5)
     with k1:
-        st.metric("Overall Progress", f"{overall_pct}%", f"{total_done}/{total_all} tasks")
+        st.metric(
+            "Overall Progress", f"{overall_pct}%", f"{total_done}/{total_all} tasks"
+        )
     with k2:
-        st.metric("✅ Phases Done",     str(completed_phases))
+        st.metric("✅ Phases Done", str(completed_phases))
     with k3:
-        st.metric("🔶 In Progress",     str(in_progress_phases))
+        st.metric("🔶 In Progress", str(in_progress_phases))
     with k4:
-        st.metric("⬜ Not Started",     str(not_started_phases))
+        st.metric("⬜ Not Started", str(not_started_phases))
     with k5:
-        st.metric("📅 Project Date",    "Summer 2026")
+        st.metric("📅 Project Date", "Summer 2026")
 
     st.divider()
 
@@ -309,9 +316,9 @@ uv run streamlit run app/main.py
             with cols[i % 3]:
                 st.markdown(
                     f'<div style="background:{colours[i]}22;border:1px solid {colours[i]}55;'
-                    f'border-radius:8px;padding:6px 10px;margin-bottom:6px;'
+                    f"border-radius:8px;padding:6px 10px;margin-bottom:6px;"
                     f'color:{colours[i]};font-weight:700;font-size:0.9rem;text-align:center">'
-                    f'{sym}</div>',
+                    f"{sym}</div>",
                     unsafe_allow_html=True,
                 )
         st.caption("Edit config/symbols.toml to add more")
@@ -343,12 +350,12 @@ uv run streamlit run app/main.py
     st.subheader("🧭 Navigate the App")
     nav_cols = st.columns(3)
     nav_pages = [
-        ("📈 Stock Overview",     "Phase 1 · Load & chart OHLCV data",         "✅ Ready"),
-        ("🔍 Data Explorer",      "Phase 1 · Raw data tables & CSV export",     "✅ Ready"),
-        ("📊 Indicators",         "Phase 3 · dbt-powered technical indicators", "🔶 Stub"),
-        ("📉 Analysis",           "Phase 4 · Analytics dashboards",             "⬜ Pending"),
-        ("🤖 Assistant Chat",     "Phase 5 · Local LLM / RAG analysis",         "⬜ Pending"),
-        ("⚙️ Admin",              "Phase 1+ · DB status & data refresh",        "🔶 Stub"),
+        ("📈 Stock Overview", "Phase 1 · Load & chart OHLCV data", "✅ Ready"),
+        ("🔍 Data Explorer", "Phase 1 · Raw data tables & CSV export", "✅ Ready"),
+        ("📊 Indicators", "Phase 3 · dbt-powered technical indicators", "🔶 Stub"),
+        ("📉 Analysis", "Phase 4 · Analytics dashboards", "⬜ Pending"),
+        ("🤖 Assistant Chat", "Phase 5 · Local LLM / RAG analysis", "⬜ Pending"),
+        ("⚙️ Admin", "Phase 1+ · DB status & data refresh", "🔶 Stub"),
     ]
     for i, (title, desc, badge) in enumerate(nav_pages):
         with nav_cols[i % 3]:
