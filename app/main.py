@@ -15,12 +15,13 @@ from app.config import AppConfig
 
 def main():
     """Main Streamlit app entry point."""
-    # TODO: Load config
-    AppConfig()
+    # Load config
+    if "config" not in st.session_state:
+        st.session_state.config = AppConfig()
 
-    # TODO: Setup page configuration
+    # Setup page configuration
     st.set_page_config(
-        page_title="de-bootcamp-summer2026",
+        page_title=st.session_state.config.app_name,
         page_icon="📊",
         layout="wide",
     )
@@ -35,7 +36,7 @@ def main():
     # 6. AI Analyst (LLM/RAG chat, Phase 5+)
     # 99. Admin (admin controls & setup)
 
-    st.title("de-bootcamp-summer2026")
+    st.title(st.session_state.config.app_name)
     st.write("Data Engineering Learning Project")
 
     pages = {
