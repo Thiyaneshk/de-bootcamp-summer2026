@@ -74,55 +74,57 @@ def detect_crossovers(df: pd.DataFrame) -> list[dict]:
     df["ema_diff"] = df["ema_50"] - df["ema_200"]
     df["ema_diff_prev"] = df["ema_diff"].shift(1)
 
-    for i in range(1, len(df)):
-        row = df.iloc[i]
-        date_str = row["timestamp"].strftime("%Y-%m-%d")
+    sma_valid = df["sma_diff"].notna() & df["sma_diff_prev"].notna()
+    sma_golden_mask = sma_valid & (df["sma_diff"] > 0) & (df["sma_diff_prev"] <= 0)
+    sma_death_mask = sma_valid & (df["sma_diff"] < 0) & (df["sma_diff_prev"] >= 0)
 
-        # SMA Golden / Death Cross
-        if pd.notna(row["sma_diff"]) and pd.notna(row["sma_diff_prev"]):
-            if row["sma_diff"] > 0 >= row["sma_diff_prev"]:
-                events.append(
-                    {
-                        "date": date_str,
-                        "timestamp": row["timestamp"],
-                        "type": "Golden Cross (SMA 20/50)",
-                        "desc": f"SMA 20 crossed above SMA 50 at {row['close']:.2f}",
-                        "is_bullish": True,
-                    }
-                )
-            elif row["sma_diff"] < 0 <= row["sma_diff_prev"]:
-                events.append(
-                    {
-                        "date": date_str,
-                        "timestamp": row["timestamp"],
-                        "type": "Death Cross (SMA 20/50)",
-                        "desc": f"SMA 20 crossed below SMA 50 at {row['close']:.2f}",
-                        "is_bullish": False,
-                    }
-                )
+    ema_valid = df["ema_diff"].notna() & df["ema_diff_prev"].notna()
+    ema_golden_mask = ema_valid & (df["ema_diff"] > 0) & (df["ema_diff_prev"] <= 0)
+    ema_death_mask = ema_valid & (df["ema_diff"] < 0) & (df["ema_diff_prev"] >= 0)
 
-        # EMA Golden / Death Cross
-        if pd.notna(row["ema_diff"]) and pd.notna(row["ema_diff_prev"]):
-            if row["ema_diff"] > 0 >= row["ema_diff_prev"]:
-                events.append(
-                    {
-                        "date": date_str,
-                        "timestamp": row["timestamp"],
-                        "type": "Golden Cross (EMA 50/200)",
-                        "desc": f"EMA 50 crossed above EMA 200 at {row['close']:.2f}",
-                        "is_bullish": True,
-                    }
-                )
-            elif row["ema_diff"] < 0 <= row["ema_diff_prev"]:
-                events.append(
-                    {
-                        "date": date_str,
-                        "timestamp": row["timestamp"],
-                        "type": "Death Cross (EMA 50/200)",
-                        "desc": f"EMA 50 crossed below EMA 200 at {row['close']:.2f}",
-                        "is_bullish": False,
-                    }
-                )
+    for idx, row in df[sma_golden_mask].iterrows():
+        events.append(
+            {
+                "date": row["timestamp"].strftime("%Y-%m-%d"),
+                "timestamp": row["timestamp"],
+                "type": "Golden Cross (SMA 20/50)",
+                "desc": f"SMA 20 crossed above SMA 50 at {row['close']:.2f}",
+                "is_bullish": True,
+            }
+        )
+
+    for idx, row in df[sma_death_mask].iterrows():
+        events.append(
+            {
+                "date": row["timestamp"].strftime("%Y-%m-%d"),
+                "timestamp": row["timestamp"],
+                "type": "Death Cross (SMA 20/50)",
+                "desc": f"SMA 20 crossed below SMA 50 at {row['close']:.2f}",
+                "is_bullish": False,
+            }
+        )
+
+    for idx, row in df[ema_golden_mask].iterrows():
+        events.append(
+            {
+                "date": row["timestamp"].strftime("%Y-%m-%d"),
+                "timestamp": row["timestamp"],
+                "type": "Golden Cross (EMA 50/200)",
+                "desc": f"EMA 50 crossed above EMA 200 at {row['close']:.2f}",
+                "is_bullish": True,
+            }
+        )
+
+    for idx, row in df[ema_death_mask].iterrows():
+        events.append(
+            {
+                "date": row["timestamp"].strftime("%Y-%m-%d"),
+                "timestamp": row["timestamp"],
+                "type": "Death Cross (EMA 50/200)",
+                "desc": f"EMA 50 crossed below EMA 200 at {row['close']:.2f}",
+                "is_bullish": False,
+            }
+        )
 
     return sorted(events, key=lambda x: x["timestamp"], reverse=True)
 
