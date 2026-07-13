@@ -13,6 +13,8 @@ import pandas as pd
 import yfinance as yf
 from app.core.cache.redis_cache import redis_cache
 
+from app.core.cache.redis_cache import redis_cache
+
 
 @redis_cache(ttl=300, prefix="prices")
 def load_prices_5m(

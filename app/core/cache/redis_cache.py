@@ -1,9 +1,10 @@
 """Redis cache wrapper replacing @st.cache_data for distributed caching."""
+import hashlib
 import os
 import pickle
-import hashlib
-import redis
 from functools import wraps
+
+import redis
 
 _client = None
 
