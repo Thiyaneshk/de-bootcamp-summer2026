@@ -18,7 +18,6 @@ from sqlalchemy.engine import Engine
 load_dotenv()
 
 
-
 @contextmanager
 def get_duckdb_connection():
     """
@@ -81,10 +80,6 @@ def get_db_engine() -> Engine:
 
     Yields:
         Database engine (DuckDB or PostgreSQL)
-
-    TODO: Implement conditional logic:
-    - If POSTGRES_URL is set: use PostgreSQL
-    - Else: use DuckDB
     """
     postgres_url = os.getenv("POSTGRES_URL")
     if postgres_url:
