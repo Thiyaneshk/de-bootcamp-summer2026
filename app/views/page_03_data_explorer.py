@@ -6,9 +6,9 @@ export to CSV, and push selected symbols to PostgreSQL.
 """
 
 import io
-import os
 import logging
-from datetime import date, datetime, timedelta
+import os
+from datetime import date, timedelta
 
 import duckdb
 import pandas as pd
@@ -191,7 +191,7 @@ def push_to_postgres(df: pd.DataFrame, pg_url: str) -> tuple[int, str]:
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
             """)
-            result = conn.execute(upsert_sql)
+            conn.execute(upsert_sql)
             conn.execute(text("DROP TABLE IF EXISTS prices_tmp"))
 
         engine.dispose()

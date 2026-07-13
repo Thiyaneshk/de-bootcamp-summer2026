@@ -49,6 +49,12 @@ phase5 = [
     "langchain>=0.1.0",
 ]
 
+# Phase 7: Snowflake Cloud Data Warehouse
+phase7 = [
+    "snowflake-connector-python>=3.6.0",
+    "dbt-snowflake>=1.9.0",
+]
+
 # Development dependencies
 dev = [
     "pytest>=7.0.0",
@@ -59,7 +65,7 @@ dev = [
 
 # All dependencies (for Docker)
 all = [
-    "de-bootcamp-summer2026[phase1,phase2,phase3,phase5,dev]"
+    "de-bootcamp-summer2026[phase1,phase2,phase3,phase5,phase6,phase7,dev]"
 ]
 
 [tool.setuptools]

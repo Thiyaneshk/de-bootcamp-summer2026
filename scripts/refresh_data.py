@@ -18,13 +18,12 @@ Usage:
 import argparse
 import logging
 import os
-from datetime import datetime, timedelta
-
 import tomllib
+from datetime import datetime, timedelta
 
 from app.core.etl.prices import load_prices_daily
 from app.db.connection import get_db_engine
-from app.db.utils import create_prices_table, insert_prices, get_latest_prices
+from app.db.utils import create_prices_table, get_latest_prices, insert_prices
 
 
 def refresh_all():
@@ -103,9 +102,9 @@ def main():
     parser = argparse.ArgumentParser(description='ETL data refresh script')
     parser.add_argument('--symbols', type=str, help='Comma-separated symbols to refresh')
     parser.add_argument('--all', action='store_true', help='Refresh all symbols')
-    
+
     args = parser.parse_args()
-    
+
     if args.all:
         refresh_all()
     elif args.symbols:

@@ -5,8 +5,10 @@ Landing page showing project status, learning roadmap, quick stats,
 and navigation guidance based on current repo implementation state.
 """
 
-import streamlit as st
 from datetime import date
+
+import streamlit as st
+
 # ── Phase / task definitions ────────────────────────────────────────────────
 
 PHASES = [

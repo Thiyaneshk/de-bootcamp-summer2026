@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: fct_daily_prices
+    description: "Daily price aggregations and summary statistics."
+    columns:
+      - name: symbol
+        description: "Stock ticker symbol"
+      - name: date
+        description: "Trading date"
+      - name: close
+        description: "Closing price"
+
+  - name: fct_technical_indicators
+    description: "Technical indicators computed from daily prices."
+    columns:
+      - name: symbol
+        description: "Stock ticker symbol"
+      - name: date
+        description: "Trading date"
+      - name: sma_20
+        description: "20-day Simple Moving Average"
+      - name: sma_50
+        description: "50-day Simple Moving Average"

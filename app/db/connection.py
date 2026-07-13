@@ -7,14 +7,12 @@ Dual-backend database support:
 """
 
 import os
-import duckdb
 from contextlib import contextmanager
+
+import duckdb
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
-from sqlalchemy.engine import URL
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,10 +23,10 @@ load_dotenv()
 def get_duckdb_connection():
     """
     Get DuckDB connection (Phase 1).
-    
+
     Yields:
         DuckDB connection object
-        
+
     TODO: Implement context manager for DuckDB
     """
     db_path = os.getenv("DUCKDB_PATH", "data/app.duckdb")
@@ -54,10 +52,10 @@ def get_duckdb_connection():
 def get_postgres_engine() -> Engine:
     """
     Get SQLAlchemy PostgreSQL engine (Phase 2+).
-    
+
     Yields:
         SQLAlchemy Engine object
-        
+
     TODO: Implement PostgreSQL engine creation from env variable
     """
     postgres_url = os.getenv("POSTGRES_URL")
@@ -79,13 +77,13 @@ def get_postgres_engine() -> Engine:
 def get_db_engine() -> Engine:
     """
     Get database engine based on environment.
-    
+
     Automatically switches between DuckDB and PostgreSQL based on
     POSTGRES_URL environment variable.
-    
+
     Yields:
         Database engine (DuckDB or PostgreSQL)
-        
+
     TODO: Implement conditional logic:
     - If POSTGRES_URL is set: use PostgreSQL
     - Else: use DuckDB
@@ -112,14 +110,14 @@ def get_db_engine() -> Engine:
 def execute_query(query: str, db_type: str = "auto") -> list:
     """
     Execute a SQL query on the configured database.
-    
+
     Args:
         query: SQL query string
         db_type: "auto", "duckdb", or "postgres"
-    
+
     Returns:
         Query result rows
-        
+
     TODO: Implement query execution
     """
     db_type = db_type.lower()
