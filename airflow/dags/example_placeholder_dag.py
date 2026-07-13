@@ -6,10 +6,9 @@ Simple placeholder DAG for testing Airflow setup.
 TODO: Replace with actual ETL logic or remove after testing.
 """
 
-from airflow import DAG
-from airflow.operators.bash import BashOperator
 from datetime import datetime
 
+from airflow import DAG
 
 dag = DAG(
     'example_placeholder_dag',

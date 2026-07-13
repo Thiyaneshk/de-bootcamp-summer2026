@@ -16,8 +16,8 @@ Usage:
     uv run python scripts/init_db.py
 """
 
-import os
 import logging
+
 from app.db.connection import get_db_engine
 from app.db.utils import create_prices_table
 

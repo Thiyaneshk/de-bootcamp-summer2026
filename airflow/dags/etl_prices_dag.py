@@ -34,9 +34,10 @@ import logging
 import os
 from datetime import datetime, timedelta
 
-from airflow import DAG
-from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
+
+from airflow import DAG
 
 logger = logging.getLogger(__name__)
 
@@ -171,8 +172,9 @@ def push_to_postgres(**context) -> dict:
         context["ti"].xcom_push(key="pg_rows", value=0)
         return {"pg_rows": 0, "skipped": True}
 
-    from scripts.pg_loader import fetch_from_duckdb
     from sqlalchemy import create_engine, text
+
+    from scripts.pg_loader import fetch_from_duckdb
 
     symbols = context["ti"].xcom_pull(key="symbols", task_ids="download_prices") or _get_symbols()
     logger.info("Task 3 — pushing DuckDB → PostgreSQL for: %s", symbols)
