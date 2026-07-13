@@ -18,7 +18,6 @@ from sqlalchemy.engine import Engine
 load_dotenv()
 
 
-
 @contextmanager
 def get_duckdb_connection():
     """
@@ -55,8 +54,6 @@ def get_postgres_engine() -> Engine:
 
     Yields:
         SQLAlchemy Engine object
-
-    TODO: Implement PostgreSQL engine creation from env variable
     """
     postgres_url = os.getenv("POSTGRES_URL")
     if not postgres_url:
