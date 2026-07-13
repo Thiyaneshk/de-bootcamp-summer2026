@@ -26,8 +26,6 @@ def get_duckdb_connection():
 
     Yields:
         DuckDB connection object
-
-    TODO: Implement context manager for DuckDB
     """
     db_path = os.getenv("DUCKDB_PATH", "data/app.duckdb")
     # Ensure parent directory exists
