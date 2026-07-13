@@ -18,7 +18,6 @@ from sqlalchemy.engine import Engine
 load_dotenv()
 
 
-
 @contextmanager
 def get_duckdb_connection():
     """
@@ -26,8 +25,6 @@ def get_duckdb_connection():
 
     Yields:
         DuckDB connection object
-
-    TODO: Implement context manager for DuckDB
     """
     db_path = os.getenv("DUCKDB_PATH", "data/app.duckdb")
     # Ensure parent directory exists
@@ -55,8 +52,6 @@ def get_postgres_engine() -> Engine:
 
     Yields:
         SQLAlchemy Engine object
-
-    TODO: Implement PostgreSQL engine creation from env variable
     """
     postgres_url = os.getenv("POSTGRES_URL")
     if not postgres_url:
@@ -83,10 +78,6 @@ def get_db_engine() -> Engine:
 
     Yields:
         Database engine (DuckDB or PostgreSQL)
-
-    TODO: Implement conditional logic:
-    - If POSTGRES_URL is set: use PostgreSQL
-    - Else: use DuckDB
     """
     postgres_url = os.getenv("POSTGRES_URL")
     if postgres_url:

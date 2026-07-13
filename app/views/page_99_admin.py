@@ -45,12 +45,7 @@ def check_duckdb_status(db_path: str) -> dict:
 
 def check_postgres_status(pg_url: str) -> dict:
     """Check PostgreSQL connection, active schemas, and table row counts."""
-    status = {
-        "connected": False,
-        "error": None,
-        "schemas": [],
-        "tables": {}
-    }
+    status = {"connected": False, "error": None, "schemas": [], "tables": {}}
     if not pg_url:
         status["error"] = "POSTGRES_URL environment variable is not set."
         return status
@@ -61,10 +56,12 @@ def check_postgres_status(pg_url: str) -> dict:
             status["connected"] = True
 
             # Schemas check
-            schemas_res = conn.execute(text(
-                "SELECT schema_name FROM information_schema.schemata "
-                "WHERE schema_name IN ('public', 'public_staging', 'public_marts')"
-            )).fetchall()
+            schemas_res = conn.execute(
+                text(
+                    "SELECT schema_name FROM information_schema.schemata "
+                    "WHERE schema_name IN ('public', 'public_staging', 'public_marts')"
+                )
+            ).fetchall()
             status["schemas"] = [r[0] for r in schemas_res]
 
             # Row counts in tables
@@ -72,15 +69,19 @@ def check_postgres_status(pg_url: str) -> dict:
                 ("public", "prices"),
                 ("public_staging", "stg_prices"),
                 ("public_marts", "fct_daily_prices"),
-                ("public_marts", "fct_technical_indicators")
+                ("public_marts", "fct_technical_indicators"),
             ]
 
             for schema, table in tables_to_check:
                 try:
-                    count_res = conn.execute(text(f"SELECT COUNT(*) FROM {schema}.{table}")).scalar()
+                    count_res = conn.execute(
+                        text(f"SELECT COUNT(*) FROM {schema}.{table}")
+                    ).scalar()
                     status["tables"][f"{schema}.{table}"] = f"{count_res:,} rows"
                 except Exception:
-                    status["tables"][f"{schema}.{table}"] = "❌ Table missing/unpopulated"
+                    status["tables"][
+                        f"{schema}.{table}"
+                    ] = "❌ Table missing/unpopulated"
         engine.dispose()
     except Exception as e:
         status["error"] = str(e)
@@ -106,8 +107,19 @@ def run_dbt_command() -> tuple[bool, str]:
         dbt_dir = project_root / "dbt"
 
         # Run dbt run against prod target
-        cmd = ["uv", "run", "dbt", "run", "--profiles-dir", str(dbt_dir), "--target", "prod"]
-        res = subprocess.run(cmd, cwd=str(project_root), capture_output=True, text=True, timeout=90)
+        cmd = [
+            "uv",
+            "run",
+            "dbt",
+            "run",
+            "--profiles-dir",
+            str(dbt_dir),
+            "--target",
+            "prod",
+        ]
+        res = subprocess.run(
+            cmd, cwd=str(project_root), capture_output=True, text=True, timeout=90
+        )
 
         if res.returncode == 0:
             return True, res.stdout
@@ -138,11 +150,9 @@ def main():
 
     config = AppConfig()
 
-    tab_status, tab_refresh, tab_config = st.tabs([
-        "🛡️ System Status",
-        "🔄 Manual Refreshes",
-        "📝 Configurations"
-    ])
+    tab_status, tab_refresh, tab_config = st.tabs(
+        ["🛡️ System Status", "🔄 Manual Refreshes", "📝 Configurations"]
+    )
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB 1: System Status & Cache Clear
@@ -170,7 +180,9 @@ def main():
                 st.success("PostgreSQL database connection successful!")
 
                 # Active schemas check
-                st.markdown(f"**Discovered Schemas:** {', '.join([f'`{s}`' for s in pg_status['schemas']])}")
+                st.markdown(
+                    f"**Discovered Schemas:** {', '.join([f'`{s}`' for s in pg_status['schemas']])}"
+                )
 
                 # Tables row counts
                 st.markdown("**Table Stats:**")
@@ -179,16 +191,22 @@ def main():
             else:
                 st.error("Could not connect to PostgreSQL database.")
                 st.markdown(f"**Connection Error:** `{pg_status['error']}`")
-                st.info("Check if Postgres container is running: `docker-compose up -d postgres`")
+                st.info(
+                    "Check if Postgres container is running: `docker-compose up -d postgres`"
+                )
 
         # 3. Ollama status
         oll_status = check_ollama_status()
         with st.expander("🤖 Ollama LLM Connection", expanded=True):
             if oll_status["running"]:
                 st.success("Ollama service reached successfully!")
-                st.markdown(f"**Available local models:** {', '.join([f'`{m}`' for m in oll_status['models']])}")
+                st.markdown(
+                    f"**Available local models:** {', '.join([f'`{m}`' for m in oll_status['models']])}"
+                )
             else:
-                st.error("Ollama service could not be reached at http://localhost:11434")
+                st.error(
+                    "Ollama service could not be reached at http://localhost:11434"
+                )
                 st.markdown(f"**Connection Error:** `{oll_status['error']}`")
                 st.info("Ensure Ollama application is running on your Mac.")
 
@@ -217,13 +235,17 @@ def main():
         symbols_to_refresh = st.multiselect(
             "Select Tickers to Ingest",
             options=config.symbols,
-            default=config.symbols[:3] if config.symbols else []
+            default=config.symbols[:3] if config.symbols else [],
         )
 
         col_ref_sel, col_ref_all = st.columns(2)
 
         with col_ref_sel:
-            if st.button("🚀 Refresh Selected Tickers", type="primary", disabled=not symbols_to_refresh):
+            if st.button(
+                "🚀 Refresh Selected Tickers",
+                type="primary",
+                disabled=not symbols_to_refresh,
+            ):
                 with st.spinner(f"Pulling data for {', '.join(symbols_to_refresh)}..."):
                     refresh_symbols(symbols_to_refresh)
                 st.success("ETL price ingestion finished!")

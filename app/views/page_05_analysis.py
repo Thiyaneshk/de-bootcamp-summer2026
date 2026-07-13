@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 def load_analysis_symbols() -> list[str]:
     """Load distinct symbols from public_marts.fct_daily_prices."""
     try:
-        query = "SELECT DISTINCT symbol FROM public_marts.fct_daily_prices ORDER BY symbol"
+        query = (
+            "SELECT DISTINCT symbol FROM public_marts.fct_daily_prices ORDER BY symbol"
+        )
         with get_postgres_engine() as engine:
             with engine.connect() as conn:
                 result = conn.execute(text(query)).fetchall()
@@ -106,21 +108,19 @@ def main():
             "Select Symbols",
             options=all_symbols,
             default=all_symbols[:3] if len(all_symbols) >= 3 else all_symbols,
-            help="Select one or more symbols to analyze and compare"
+            help="Select one or more symbols to analyze and compare",
         )
 
     with col_start:
         start_date = st.date_input(
             "Start Date",
             value=date.today() - timedelta(days=90),
-            help="Show data starting from this date"
+            help="Show data starting from this date",
         )
 
     with col_end:
         end_date = st.date_input(
-            "End Date",
-            value=date.today(),
-            help="Show data ending on this date"
+            "End Date", value=date.today(), help="Show data ending on this date"
         )
 
     if not selected_symbols:
@@ -140,10 +140,14 @@ def main():
         return
 
     # Apply date filters
-    df = raw_df[(raw_df["date"].dt.date >= start_date) & (raw_df["date"].dt.date <= end_date)].copy()
+    df = raw_df[
+        (raw_df["date"].dt.date >= start_date) & (raw_df["date"].dt.date <= end_date)
+    ].copy()
 
     if df.empty:
-        st.warning(f"No records available for the selected symbols in date range {start_date} to {end_date}.")
+        st.warning(
+            f"No records available for the selected symbols in date range {start_date} to {end_date}."
+        )
         return
 
     # Compute daily return for return calculations
@@ -166,8 +170,7 @@ def main():
 
         # Current Price
         kpi_col1.metric(
-            label=f"{primary_symbol} Price",
-            value=f"{latest_row['daily_close']:.2f}"
+            label=f"{primary_symbol} Price", value=f"{latest_row['daily_close']:.2f}"
         )
 
         # 7-day change
@@ -179,43 +182,44 @@ def main():
             kpi_col2.metric(
                 label="7-Day Performance",
                 value=f"{perf_7d:+.2f}%",
-                delta=f"{latest_row['daily_close'] - price_7d:.2f}"
+                delta=f"{latest_row['daily_close'] - price_7d:.2f}",
             )
         else:
             # Fallback to total period change
-            perf_period = ((latest_row["daily_close"] - earliest_row["daily_close"]) / earliest_row["daily_close"]) * 100
+            perf_period = (
+                (latest_row["daily_close"] - earliest_row["daily_close"])
+                / earliest_row["daily_close"]
+            ) * 100
             kpi_col2.metric(
                 label="Period Performance",
                 value=f"{perf_period:+.2f}%",
-                delta=f"{latest_row['daily_close'] - earliest_row['daily_close']:.2f}"
+                delta=f"{latest_row['daily_close'] - earliest_row['daily_close']:.2f}",
             )
 
         # 30-day (or period) High/Low
         high_30d = df_primary["daily_high"].max()
         low_30d = df_primary["daily_low"].min()
         kpi_col3.metric(
-            label="Period Range (High / Low)",
-            value=f"{high_30d:.2f} / {low_30d:.2f}"
+            label="Period Range (High / Low)", value=f"{high_30d:.2f} / {low_30d:.2f}"
         )
 
         # Average volume
         avg_vol = df_primary["daily_volume"].mean()
-        kpi_col4.metric(
-            label="Avg Daily Volume",
-            value=f"{int(avg_vol):,}"
-        )
+        kpi_col4.metric(label="Avg Daily Volume", value=f"{int(avg_vol):,}")
     else:
         st.info("Primary symbol data unavailable.")
 
     st.divider()
 
     # ── Tabs: Charts ──────────────────────────────────────────────────────────
-    tab_perf, tab_vol, tab_vol_spikes, tab_corr = st.tabs([
-        "📈 Performance Comparison",
-        "⚡ Volatility Profile",
-        "⚠️ Volume Spike Alerts",
-        "🧮 Correlation Heatmap"
-    ])
+    tab_perf, tab_vol, tab_vol_spikes, tab_corr = st.tabs(
+        [
+            "📈 Performance Comparison",
+            "⚡ Volatility Profile",
+            "⚠️ Volume Spike Alerts",
+            "🧮 Correlation Heatmap",
+        ]
+    )
 
     # TAB 1: Performance Comparison
     with tab_perf:
@@ -230,14 +234,16 @@ def main():
             df_sym = df[df["symbol"] == sym].sort_values("date")
             if df_sym.empty:
                 continue
-            fig_perf.add_trace(go.Scatter(
-                x=df_sym["date"],
-                y=df_sym["cumulative_return"],
-                mode="lines",
-                name=sym,
-                line=dict(width=2.2),
-                hovertemplate=f"<b>{sym}</b>: %{{y:+.2f}}%<extra></extra>"
-            ))
+            fig_perf.add_trace(
+                go.Scatter(
+                    x=df_sym["date"],
+                    y=df_sym["cumulative_return"],
+                    mode="lines",
+                    name=sym,
+                    line=dict(width=2.2),
+                    hovertemplate=f"<b>{sym}</b>: %{{y:+.2f}}%<extra></extra>",
+                )
+            )
 
         fig_perf.update_layout(
             template="plotly_dark",
@@ -256,8 +262,8 @@ def main():
                 y=1.02,
                 xanchor="right",
                 x=1,
-                bgcolor="rgba(15, 23, 42, 0.5)"
-            )
+                bgcolor="rgba(15, 23, 42, 0.5)",
+            ),
         )
         st.plotly_chart(fig_perf, use_container_width=True)
 
@@ -275,11 +281,13 @@ def main():
                 continue
             daily_vol = df_sym["daily_return"].std() * 100
             ann_vol = daily_vol * np.sqrt(252)
-            vol_data.append({
-                "Symbol": sym,
-                "Daily Volatility (%)": round(daily_vol, 3),
-                "Annualized Volatility (%)": round(ann_vol, 2)
-            })
+            vol_data.append(
+                {
+                    "Symbol": sym,
+                    "Daily Volatility (%)": round(daily_vol, 3),
+                    "Annualized Volatility (%)": round(ann_vol, 2),
+                }
+            )
 
         vol_df = pd.DataFrame(vol_data)
 
@@ -295,14 +303,14 @@ def main():
                     y="Annualized Volatility (%)",
                     color="Symbol",
                     title="Annualized Volatility comparison",
-                    template="plotly_dark"
+                    template="plotly_dark",
                 )
                 fig_vol.update_layout(
                     plot_bgcolor="rgba(15, 23, 42, 0.4)",
                     paper_bgcolor="rgba(15, 23, 42, 1)",
                     showlegend=False,
                     height=300,
-                    margin=dict(l=20, r=20, t=40, b=20)
+                    margin=dict(l=20, r=20, t=40, b=20),
                 )
                 st.plotly_chart(fig_vol, use_container_width=True)
             else:
@@ -317,17 +325,21 @@ def main():
                 if df_sym.empty or len(df_sym) < 20:
                     continue
                 # Rolling std * 100 * sqrt(252)
-                df_sym["rolling_vol"] = df_sym["daily_return"].rolling(20).std() * 100 * np.sqrt(252)
+                df_sym["rolling_vol"] = (
+                    df_sym["daily_return"].rolling(20).std() * 100 * np.sqrt(252)
+                )
                 df_sym = df_sym.dropna(subset=["rolling_vol"])
 
-                fig_roll.add_trace(go.Scatter(
-                    x=df_sym["date"],
-                    y=df_sym["rolling_vol"],
-                    mode="lines",
-                    name=sym,
-                    line=dict(width=2),
-                    hovertemplate=f"<b>{sym} Rolling Vol</b>: %{{y:.2f}}%<extra></extra>"
-                ))
+                fig_roll.add_trace(
+                    go.Scatter(
+                        x=df_sym["date"],
+                        y=df_sym["rolling_vol"],
+                        mode="lines",
+                        name=sym,
+                        line=dict(width=2),
+                        hovertemplate=f"<b>{sym} Rolling Vol</b>: %{{y:.2f}}%<extra></extra>",
+                    )
+                )
 
             fig_roll.update_layout(
                 template="plotly_dark",
@@ -346,8 +358,8 @@ def main():
                     y=1.02,
                     xanchor="right",
                     x=1,
-                    bgcolor="rgba(15, 23, 42, 0.5)"
-                )
+                    bgcolor="rgba(15, 23, 42, 0.5)",
+                ),
             )
             st.plotly_chart(fig_roll, use_container_width=True)
 
@@ -374,15 +386,17 @@ def main():
 
             for _, r in spikes.iterrows():
                 ratio = r["daily_volume"] / mean_vol
-                all_spikes.append({
-                    "date": r["date"].strftime("%Y-%m-%d"),
-                    "timestamp": r["date"],
-                    "symbol": sym,
-                    "volume": r["daily_volume"],
-                    "avg_volume": mean_vol,
-                    "ratio": ratio,
-                    "desc": f"Volume spike of <b>{int(r['daily_volume']):,}</b> shares (<b>{ratio:.1f}x</b> the period average of {int(mean_vol):,})"
-                })
+                all_spikes.append(
+                    {
+                        "date": r["date"].strftime("%Y-%m-%d"),
+                        "timestamp": r["date"],
+                        "symbol": sym,
+                        "volume": r["daily_volume"],
+                        "avg_volume": mean_vol,
+                        "ratio": ratio,
+                        "desc": f"Volume spike of <b>{int(r['daily_volume']):,}</b> shares (<b>{ratio:.1f}x</b> the period average of {int(mean_vol):,})",
+                    }
+                )
 
         all_spikes = sorted(all_spikes, key=lambda x: x["timestamp"], reverse=True)
 
@@ -392,7 +406,7 @@ def main():
             for spike in all_spikes[:12]:
                 st.markdown(
                     f"📅 **{spike['date']}** · **{spike['symbol']}** · {spike['desc']}",
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
         # Interactive Volume Trend Chart
@@ -403,12 +417,14 @@ def main():
             df_sym = df[df["symbol"] == sym].sort_values("date")
             if df_sym.empty:
                 continue
-            fig_vol_hist.add_trace(go.Bar(
-                x=df_sym["date"],
-                y=df_sym["daily_volume"],
-                name=sym,
-                hovertemplate=f"<b>{sym} Volume</b>: %{{y:,}}<extra></extra>"
-            ))
+            fig_vol_hist.add_trace(
+                go.Bar(
+                    x=df_sym["date"],
+                    y=df_sym["daily_volume"],
+                    name=sym,
+                    hovertemplate=f"<b>{sym} Volume</b>: %{{y:,}}<extra></extra>",
+                )
+            )
 
         fig_vol_hist.update_layout(
             template="plotly_dark",
@@ -427,8 +443,8 @@ def main():
                 y=1.02,
                 xanchor="right",
                 x=1,
-                bgcolor="rgba(15, 23, 42, 0.5)"
-            )
+                bgcolor="rgba(15, 23, 42, 0.5)",
+            ),
         )
         st.plotly_chart(fig_vol_hist, use_container_width=True)
 
@@ -437,7 +453,9 @@ def main():
         st.markdown("#### Cross-Symbol Daily Returns Correlation Matrix")
 
         if len(selected_symbols) < 2:
-            st.warning("⚠️ Please select 2 or more symbols to display the correlation heatmap.")
+            st.warning(
+                "⚠️ Please select 2 or more symbols to display the correlation heatmap."
+            )
         else:
             # Pivot to get returns per symbol per date
             pivot_df = df.pivot(index="date", columns="symbol", values="daily_return")
@@ -453,19 +471,17 @@ def main():
                 color_continuous_scale="RdBu",
                 color_continuous_midpoint=0,
                 labels=dict(color="Correlation"),
-                template="plotly_dark"
+                template="plotly_dark",
             )
 
             fig_heat.update_layout(
                 title=dict(
-                    text="Correlation of Daily Returns",
-                    x=0.5,
-                    xanchor="center"
+                    text="Correlation of Daily Returns", x=0.5, xanchor="center"
                 ),
                 plot_bgcolor="rgba(15, 23, 42, 0.4)",
                 paper_bgcolor="rgba(15, 23, 42, 1)",
                 margin=dict(l=40, r=40, t=60, b=40),
-                height=450
+                height=450,
             )
 
             st.plotly_chart(fig_heat, use_container_width=True)
