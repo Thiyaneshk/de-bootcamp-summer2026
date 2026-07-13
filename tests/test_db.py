@@ -56,8 +56,7 @@ def test_duckdb_connection():
 def test_insert_prices():
     """Test inserting price data."""
     conn = duckdb.connect(":memory:")
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE prices (
             symbol VARCHAR,
             timestamp TIMESTAMP,
@@ -67,14 +66,11 @@ def test_insert_prices():
             close FLOAT,
             volume BIGINT
         )
-    """
-    )
+    """)
 
-    conn.execute(
-        """
+    conn.execute("""
         INSERT INTO prices VALUES ('AAPL', NOW(), 189.5, 189.8, 189.4, 189.6, 1000000)
-    """
-    )
+    """)
 
     result = conn.execute("SELECT count(*) FROM prices").fetchone()
     assert result[0] == 1

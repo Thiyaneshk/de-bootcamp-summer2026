@@ -3,13 +3,6 @@ Phase 2: Manual ETL Refresh Script
 
 CLI entry point for manually running the ETL pipeline.
 
-TODO: Implement:
-- Load yfinance data for configured symbols
-- Validate data quality
-- Insert into PostgreSQL
-- Log execution
-- Handle errors gracefully
-
 Usage:
     uv run python -m scripts.refresh_data --symbols AAPL,MSFT,GOOGL
     uv run python -m scripts.refresh_data --all

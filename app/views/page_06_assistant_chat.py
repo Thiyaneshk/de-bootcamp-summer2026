@@ -87,8 +87,7 @@ def main():
     # Display welcome message if history is empty
     if not st.session_state.chat_history:
         with st.chat_message("assistant"):
-            st.markdown(
-                """
+            st.markdown("""
                 Hello! I am **Antigravity**, your local AI Financial Analyst.
                 I have real-time access to the PostgreSQL database schemas containing raw prices, staging models, and dbt indicator tables.
 
@@ -98,8 +97,7 @@ def main():
                 * *'Are there any technical indicators or volatility spikes on LUPIN.NS?'*
 
                 How can I assist your market research today?
-                """
-            )
+                """)
 
     # Render previous logs
     for message in st.session_state.chat_history:

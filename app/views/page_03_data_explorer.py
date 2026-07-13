@@ -354,13 +354,11 @@ def main() -> None:
 
     # ── TAB 3: Push to PostgreSQL ─────────────────────────────────────────────
     with tab_push:
-        st.markdown(
-            """
+        st.markdown("""
             Push the data currently visible in the table above into **PostgreSQL**.
             The `prices` table will be created automatically if it doesn't exist.
             Rows are **upserted** (no duplicates).
-            """
-        )
+            """)
 
         # Read PG URL from env or let user enter it
         pg_url_env = os.getenv("POSTGRES_URL", "")
@@ -408,8 +406,7 @@ def main() -> None:
 
         st.divider()
         st.subheader("🕐 Automated Daily Sync")
-        st.markdown(
-            """
+        st.markdown("""
             To run this push automatically every day at a set time, use the built-in scheduler:
 
             ```bash
@@ -426,8 +423,7 @@ def main() -> None:
             3. Upsert into **PostgreSQL** (persistent warehouse)
 
             > Set `POSTGRES_URL` in your `.env` file so the scheduler picks it up automatically.
-            """
-        )
+            """)
 
 
 if __name__ == "__main__":

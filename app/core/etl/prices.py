@@ -2,11 +2,6 @@
 Phase 1: yfinance Data Loading
 
 Extract stock price data from Yahoo Finance API.
-
-TODO: Implement yfinance wrapper functions:
-- load_prices_5m(symbol, start_date, end_date) → DataFrame
-- load_prices_daily(symbol, start_date, end_date) → DataFrame
-- Caching strategy (local file or in-memory)
 """
 
 import pandas as pd
@@ -33,8 +28,6 @@ def load_prices_5m(
 
     Returns:
         DataFrame with columns: Open, High, Low, Close, Volume
-
-    TODO: Implement logic
     """
     # Delegate to yfinance with 5m interval. Keep simple for phase 1.
     params: dict = {}
@@ -74,8 +67,6 @@ def load_prices_daily(
 
     Returns:
         DataFrame with daily OHLCV data
-
-    TODO: Implement logic
     """
     params: dict = {}
     # yfinance prefers either period or start/end. Use start/end if provided.
@@ -118,8 +109,6 @@ def download_multiple_symbols(
 
     Returns:
         Dictionary mapping symbol to DataFrame
-
-    TODO: Implement logic with parallel downloads
     """
     # Use yfinance to download multiple symbols at daily interval and return dict
     if not symbols:
