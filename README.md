@@ -13,6 +13,8 @@ This is a **learning-first scaffold** designed to teach you modern data engineer
 - **Phase 3:** dbt data transformations and modeling
 - **Phase 4:** Analytics dashboards and SQL insights
 - **Phase 5:** LLM integration + RAG-based analysis (optional)
+- **Phase 6:** Redis Distributed Caching for application scaling
+- **Phase 7:** Snowflake Cloud Data Warehouse integration
 
 ---
 
@@ -30,6 +32,8 @@ This is a **learning-first scaffold** designed to teach you modern data engineer
 | **Transformations** | dbt | 1.9.0+ |
 | **Visualization** | Plotly | ≥6.6.0 |
 | **LLM (Phase 5)** | Ollama | latest |
+| **Caching (Phase 6)** | Redis | ≥5.0.0 |
+| **Cloud DW (Phase 7)** | Snowflake | latest |
 | **Code Quality** | Ruff + Black | latest |
 
 ---
@@ -58,7 +62,7 @@ uv run streamlit run app/main.py
 # Visit: http://localhost:8501
 ```
 
-See **[SETUP_COMMANDS.md](SETUP_COMMANDS.md)** for complete Phase 1-5 setup.
+See **[SETUP_COMMANDS.md](SETUP_COMMANDS.md)** for complete Phase 1-7 setup.
 
 ---
 
@@ -93,7 +97,9 @@ de-bootcamp-summer2026/
 │   ├── PHASE_2_AIRFLOW_POSTGRES.md
 │   ├── PHASE_3_DBT.md
 │   ├── PHASE_4_ANALYTICS.md
-│   └── PHASE_5_LLM_RAG.md
+│   ├── PHASE_5_LLM_RAG.md
+│   ├── PHASE_6_REDIS.md
+│   └── PHASE_7_SNOWFLAKE.md
 │
 ├── tests/                    # Test placeholders
 ├── data/                     # Local data storage (Phase 1)
@@ -101,7 +107,7 @@ de-bootcamp-summer2026/
 ├── docker-compose.yml       # Services: PostgreSQL, Ollama, Streamlit
 ├── pyproject.toml           # Dependencies (phase-grouped)
 ├── ruff.toml               # Code linting config
-└── SETUP_COMMANDS.md       # All setup commands (phases 0-5)
+└── SETUP_COMMANDS.md       # All setup commands (phases 0-7)
 ```
 
 ---
@@ -146,6 +152,20 @@ de-bootcamp-summer2026/
 
 **Time:** 2-3 hours | **Start:** See `docs/PHASE_5_LLM_RAG.md`
 
+### ✅ Phase 6: Redis Caching Layer (Completed on: _______)
+- [ ] Set up Redis with Docker
+- [ ] Implement `redis_cache` decorator
+- [ ] Replace Streamlit `@st.cache_data` with Redis
+
+**Time:** 1 hour | **Start:** See `docs/PHASE_6_REDIS.md`
+
+### ✅ Phase 7: Snowflake Cloud Data Warehouse (Completed on: _______)
+- [ ] Create Snowflake account and configure credentials
+- [ ] Set up Python connector and Database Router
+- [ ] Configure dbt for Snowflake target
+
+**Time:** 1.5 hours | **Start:** See `docs/PHASE_7_SNOWFLAKE.md`
+
 ---
 
 ## 📖 Documentation
@@ -156,6 +176,8 @@ de-bootcamp-summer2026/
 - **[docs/PHASE_3_DBT.md](docs/PHASE_3_DBT.md)** — Model development, testing
 - **[docs/PHASE_4_ANALYTICS.md](docs/PHASE_4_ANALYTICS.md)** — SQL queries, visualization
 - **[docs/PHASE_5_LLM_RAG.md](docs/PHASE_5_LLM_RAG.md)** — Ollama setup, RAG patterns
+- **[docs/PHASE_6_REDIS.md](docs/PHASE_6_REDIS.md)** — Distributed caching with Redis
+- **[docs/PHASE_7_SNOWFLAKE.md](docs/PHASE_7_SNOWFLAKE.md)** — Cloud DW integration with Snowflake
 
 ---
 

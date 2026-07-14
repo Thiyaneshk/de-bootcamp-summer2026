@@ -1,6 +1,6 @@
 # Complete Setup Commands: de-bootcamp-summer2026
 
-This document contains **every command** needed to create, setup, and run the project from start to finish. Follow sequentially for Phase 0 through Phase 5.
+This document contains **every command** needed to create, setup, and run the project from start to finish. Follow sequentially for Phase 0 through Phase 7.
 
 ---
 
@@ -527,6 +527,61 @@ uv run streamlit run app/main.py
 
 ---
 
+## ⚡️ Phase 6: Redis Caching Layer
+
+### Step 6.1: Install Phase 6 Dependencies
+
+```bash
+uv sync --extra phase1 --extra phase2 --extra phase3 --extra phase5 --extra phase6
+```
+
+### Step 6.2: Start Redis Service
+
+```bash
+docker-compose up -d redis
+sleep 2
+docker-compose ps redis
+```
+
+### Step 6.3: Verify Redis Connection
+
+```bash
+docker exec -it bootcamp_redis redis-cli ping
+# Expected: PONG
+```
+
+**Phase 6 Checkpoint:** ✅ Redis container is running, cache keys are stored.
+
+---
+
+## ❄️ Phase 7: Snowflake Cloud Data Warehouse
+
+### Step 7.1: Install Phase 7 Dependencies
+
+```bash
+uv sync --extra phase1 --extra phase2 --extra phase3 --extra phase5 --extra phase6 --extra phase7
+```
+
+### Step 7.2: Configure Snowflake Credentials
+
+```bash
+# Update .env file with Snowflake details
+# SNOWFLAKE_ACCOUNT=...
+# SNOWFLAKE_USER=...
+# SNOWFLAKE_PASSWORD=...
+# DB_BACKEND=snowflake
+```
+
+### Step 7.3: Run dbt against Snowflake
+
+```bash
+uv run dbt run --profiles-dir dbt --target snowflake
+```
+
+**Phase 7 Checkpoint:** ✅ Streamlit reads directly from Snowflake, dbt models built in cloud.
+
+---
+
 ## 🧪 Complete Integration Test
 
 ### Full End-to-End Test (All Services Running)
@@ -712,6 +767,8 @@ uv run streamlit run app/main.py --logger.level=debug
 | 4 | `curl http://localhost:5432` | Test PostgreSQL connection |
 | 5 | `docker-compose up -d ollama` | Start Ollama |
 | 5 | `curl http://localhost:11434/api/tags` | Check LLM models |
+| 6 | `docker-compose up -d redis` | Start Redis |
+| 7 | `uv run dbt run --target snowflake` | Run dbt models on Snowflake |
 
 ---
 
@@ -723,6 +780,8 @@ uv run streamlit run app/main.py --logger.level=debug
 - [ ] Phase 3: dbt models compile, transformations apply
 - [ ] Phase 4: Analytics dashboards display data
 - [ ] Phase 5: Ollama responds, RAG chat works
+- [ ] Phase 6: Redis caching accelerates Streamlit reloads
+- [ ] Phase 7: Snowflake warehouse serves application directly
 
 ---
 
