@@ -25,26 +25,53 @@ def main():
         initial_sidebar_state="expanded",
     )
 
-    st.title("de-bootcamp-summer2026")
-    st.write("Data Engineering Learning Project")
+    pages = [
+        st.Page(
+            import_module("app.views.page_01_home_dashboard").main,
+            title="Home",
+            icon="🏠",
+            url_path="home",
+        ),
+        st.Page(
+            import_module("app.views.page_02_stock_overview").main,
+            title="Stock Overview",
+            icon="📈",
+            url_path="stock_overview",
+        ),
+        st.Page(
+            import_module("app.views.page_03_data_explorer").main,
+            title="Data Explorer",
+            icon="🔍",
+            url_path="data_explorer",
+        ),
+        st.Page(
+            import_module("app.views.page_04_indicators").main,
+            title="Indicators",
+            icon="📊",
+            url_path="indicators",
+        ),
+        st.Page(
+            import_module("app.views.page_05_analysis").main,
+            title="Analysis",
+            icon="📉",
+            url_path="analysis",
+        ),
+        st.Page(
+            import_module("app.views.page_06_assistant_chat").main,
+            title="Assistant Chat",
+            icon="🤖",
+            url_path="assistant_chat",
+        ),
+        st.Page(
+            import_module("app.views.page_99_admin").main,
+            title="Admin",
+            icon="⚙️",
+            url_path="admin",
+        ),
+    ]
 
-    pages = {
-        "Home": "app.views.page_01_home_dashboard",
-        "Stock Overview": "app.views.page_02_stock_overview",
-        "Data Explorer": "app.views.page_03_data_explorer",
-        "Indicators": "app.views.page_04_indicators",
-        "Analysis": "app.views.page_05_analysis",
-        "Assistant Chat": "app.views.page_06_assistant_chat",
-        "Admin": "app.views.page_99_admin",
-    }
-
-    choice = st.sidebar.selectbox("Page", list(pages.keys()))
-    module = import_module(pages[choice])
-    # Each view exposes a `main()` function
-    if hasattr(module, "main"):
-        module.main()
-    else:
-        st.write(f"Page {choice} has no main() to run.")
+    pg = st.navigation(pages)
+    pg.run()
 
 
 if __name__ == "__main__":
