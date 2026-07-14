@@ -177,6 +177,8 @@ services:
     environment:
       POSTGRES_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/stocks
       DUCKDB_PATH: /app/data/app.duckdb
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "8501:8501"
     volumes:
@@ -184,6 +186,8 @@ services:
       - duckdb_data:/app/data
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - de-network
