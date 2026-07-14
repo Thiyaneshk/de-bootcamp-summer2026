@@ -47,6 +47,15 @@ logger = logging.getLogger(__name__)
 
 
 def _get_symbols() -> list[str]:
+    try:
+        from app.db.registry import get_active_symbols
+
+        symbols = get_active_symbols()
+        if symbols:
+            return symbols
+    except Exception as e:
+        logger.warning("Registry lookup failed: %s", e)
+
     import tomllib
 
     cfg_path = os.path.join(
