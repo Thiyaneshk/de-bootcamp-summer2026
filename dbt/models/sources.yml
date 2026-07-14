@@ -22,3 +22,19 @@ sources:
             description: Closing price
           - name: volume
             description: Trading volume
+      - name: instruments
+        description: Master registry of all tracked instruments
+        columns:
+          - name: symbol
+          - name: name
+          - name: instrument_type
+          - name: exchange
+          - name: is_active
+      - name: ingestion_log
+        description: Audit trail of all ingestions
+        columns:
+          - name: id
+          - name: symbol
+          - name: ingestion_type
+          - name: status
+          - name: rows_ingested

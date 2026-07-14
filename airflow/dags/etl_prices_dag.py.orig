@@ -121,7 +121,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
                     """))
-                    conn.execute(text(f'DROP TABLE IF EXISTS "{table_name}"'))
+                    conn.execute(text(f"DROP TABLE IF EXISTS "{table_name}""))
 
     except Exception as e:
         logger.error("Error processing %s: %s", symbol, e)

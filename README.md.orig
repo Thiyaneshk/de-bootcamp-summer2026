@@ -166,13 +166,6 @@ de-bootcamp-summer2026/
 
 **Time:** 1.5 hours | **Start:** See `docs/PHASE_7_SNOWFLAKE.md`
 
-### ✅ Phase 10: Ticker Registry & Dynamic Airflow Task Mapping (Completed on: _______)
-- [ ] Create registry database tables
-- [ ] Build Streamlit UI to manage tickers
-- [ ] Refactor Airflow DAG to use dynamic task mapping (expand)
-
-**Time:** 1.5 hours | **Start:** See `docs/PHASE_10_REGISTRY.md`
-
 ---
 
 ## 📖 Documentation
@@ -185,7 +178,6 @@ de-bootcamp-summer2026/
 - **[docs/PHASE_5_LLM_RAG.md](docs/PHASE_5_LLM_RAG.md)** — Ollama setup, RAG patterns
 - **[docs/PHASE_6_REDIS.md](docs/PHASE_6_REDIS.md)** — Distributed caching with Redis
 - **[docs/PHASE_7_SNOWFLAKE.md](docs/PHASE_7_SNOWFLAKE.md)** — Cloud DW integration with Snowflake
-- **[docs/PHASE_10_REGISTRY.md](docs/PHASE_10_REGISTRY.md)** — Ticker Registry & Dynamic Airflow Tasks
 
 ---
 
@@ -250,16 +242,16 @@ pytest tests/test_etl.py -v
 
 ## ❓ FAQ
 
-**Q: Do I need to complete all phases?**  
+**Q: Do I need to complete all phases?**
 A: No! Each phase is independent. You can stop at Phase 1 (Streamlit) or Phase 3 (with dbt) and have a complete system.
 
-**Q: Can I use PostgreSQL from the start?**  
+**Q: Can I use PostgreSQL from the start?**
 A: Yes, set `POSTGRES_URL` in `.env` before Phase 1. The app automatically switches to PostgreSQL if the env var is set.
 
-**Q: How do I add more yfinance symbols?**  
+**Q: How do I add more yfinance symbols?**
 A: Edit `config/symbols.toml` and restart the app.
 
-**Q: What if I get database errors?**  
+**Q: What if I get database errors?**
 A: Phase 1 uses DuckDB (no setup needed). For PostgreSQL errors (Phase 2+), check the `SETUP_COMMANDS.md` database initialization section.
 
 ---
@@ -290,6 +282,6 @@ MIT (or your preferred license)
 
 ---
 
-**Created:** May 2026  
-**Learning Goal:** Master modern data engineering stack through hands-on practice  
+**Created:** May 2026
+**Learning Goal:** Master modern data engineering stack through hands-on practice
 **Next Step:** Start with Phase 1 → See [SETUP_COMMANDS.md](SETUP_COMMANDS.md)

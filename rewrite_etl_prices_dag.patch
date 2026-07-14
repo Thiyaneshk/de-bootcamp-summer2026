@@ -1,0 +1,372 @@
+--- airflow/dags/etl_prices_dag.py
++++ airflow/dags/etl_prices_dag.py
+@@ -1,7 +1,7 @@
+ """
+-Phase 2: ETL Prices DAG — Full Pipeline (yfinance → DuckDB → PostgreSQL)
++Phase 2 & 10: ETL Prices DAG — Kafka-style Sequential Ingestion
+
+-Apache Airflow DAG for scheduled daily stock price ingestion.
++Apache Airflow DAG for scheduled daily stock price ingestion for all active tickers.
+
+ Pipeline:
+-  Task 1 (download_prices)     Download OHLCV data from yfinance for all symbols
+-  Task 2 (store_to_duckdb)     Upsert into local DuckDB (persistent cache)
+-  Task 3 (push_to_postgres)    Upsert DuckDB data into PostgreSQL warehouse
+-  Task 4 (validate_postgres)   Assert row/symbol counts; raise if data missing
++  Task 1 (get_active_symbols)      Query registry for active symbols
++  Task 2 (download_one_by_one)     Expand for each symbol: yfinance -> DuckDB -> Postgres -> Log
++  Task 3 (validate_postgres)       Assert row/symbol counts; raise if data missing
++  Task 4 (run_dbt)                 Run dbt models
+
+@@ -29,26 +29,20 @@
+ from airflow.operators.bash import BashOperator
+ from airflow.operators.python import PythonOperator
+
+ from airflow import DAG
+
+ logger = logging.getLogger(__name__)
+
+-# ─────────────────────────────────────────────────────────────────────────────
+-# Helper: load symbols from config/symbols.toml
+-# ─────────────────────────────────────────────────────────────────────────────
+
+-
+-def _get_symbols() -> list[str]:
+-    import tomllib
+-
+-    cfg_path = os.path.join(
+-        os.path.dirname(__file__), "..", "..", "config", "symbols.toml"
+-    )
+-    try:
+-        with open(cfg_path, "rb") as f:
+-            cfg = tomllib.load(f)
+-        symbols = cfg.get("default", {}).get("symbols", [])
+-        if symbols:
+-            return symbols
+-    except Exception as e:
+-        logger.warning("Could not read symbols.toml: %s — using fallback list", e)
+-
+-    # Fallback if file missing
+-    return ["AAPL", "MSFT", "GOOGL", "TSLA", "BTC-USD"]
+-
+-
+-# ─────────────────────────────────────────────────────────────────────────────
+-# Task 1: Download from yfinance → push raw data via XCom
+-# ─────────────────────────────────────────────────────────────────────────────
+-
+-
+-def download_prices(**context) -> dict:
++def get_active_symbols_task(**context) -> list[str]:
+     """
+-    Download daily OHLCV data from yfinance for all configured symbols.
+-    Pushes a summary dict to XCom for downstream tasks.
++    Query registry.instruments WHERE is_active = TRUE
++    Push list to XCom for dynamic task mapping
+     """
+-    from app.core.etl.prices import load_prices_daily
+-
+-    symbols = _get_symbols()
+-    logger.info("Task 1 — downloading yfinance data for: %s", symbols)
+-
+-    results = {}
+-    for sym in symbols:
+-        try:
+-            df = load_prices_daily(sym, period="5d")
+-            if df is not None and not df.empty:
+-                results[sym] = len(df)
+-                logger.info("  ✓ %s: %d rows downloaded", sym, len(df))
+-            else:
+-                results[sym] = 0
+-                logger.warning("  ✗ %s: no data returned", sym)
+-        except Exception as e:
+-            results[sym] = 0
+-            logger.error("  ✗ %s: download failed — %s", sym, e)
+-
+-    total = sum(results.values())
+-    logger.info(
+-        "Task 1 complete — %d total rows downloaded across %d symbols",
+-        total,
+-        len(symbols),
+-    )
+-
+-    # Push to XCom for downstream tasks
+-    context["ti"].xcom_push(key="symbols", value=symbols)
+-    context["ti"].xcom_push(key="download_summary", value=results)
+-
+-    return {"symbols": symbols, "rows_by_symbol": results, "total_rows": total}
+-
+-
+-# ─────────────────────────────────────────────────────────────────────────────
+-# Task 2: Store downloaded data into DuckDB
+-# ─────────────────────────────────────────────────────────────────────────────
+-
+-
+-def store_to_duckdb(**context) -> dict:
+-    """
+-    Pull fresh data from yfinance (again) and upsert into local DuckDB.
+-    DuckDB acts as a fast local cache and source of truth for Phase 1.
+-    """
+-    from app.core.etl.prices import load_prices_daily
+-    from app.db.connection import get_duckdb_connection
+-    from app.db.utils import create_prices_table, insert_prices
+-
+-    symbols = (
+-        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+-        or _get_symbols()
+-    )
+-    logger.info("Task 2 — storing %d symbols to DuckDB", len(symbols))
+-
+-    total_upserted = 0
+-    with get_duckdb_connection() as conn:
+-        create_prices_table(conn)
+-
+-        for sym in symbols:
+-            try:
+-                df = load_prices_daily(sym, period="5d")
+-                if df is None or df.empty:
+-                    logger.warning("  ✗ %s: empty — skipping DuckDB upsert", sym)
+-                    continue
+-
+-                records = [
+-                    {
+-                        "symbol": sym,
+-                        "timestamp": idx.to_pydatetime(),
+-                        "open": float(row.get("Open", 0) or 0),
+-                        "high": float(row.get("High", 0) or 0),
+-                        "low": float(row.get("Low", 0) or 0),
+-                        "close": float(row.get("Close", 0) or 0),
+-                        "volume": int(row.get("Volume", 0) or 0),
+-                    }
+-                    for idx, row in df.iterrows()
+-                ]
+-
+-                n = insert_prices(conn, records)
+-                total_upserted += n
+-                logger.info("  ✓ %s: %d rows upserted to DuckDB", sym, n)
+-
+-            except Exception as e:
+-                logger.error("  ✗ %s: DuckDB upsert failed — %s", sym, e)
+-
+-    logger.info("Task 2 complete — %d total rows in DuckDB", total_upserted)
+-    context["ti"].xcom_push(key="duckdb_rows", value=total_upserted)
+-    return {"duckdb_rows": total_upserted}
+-
+-
+-# ─────────────────────────────────────────────────────────────────────────────
+-# Task 3: Push DuckDB data → PostgreSQL
+-# ─────────────────────────────────────────────────────────────────────────────
+-
+-
+-def push_to_postgres(**context) -> dict:
++    from app.db.registry import get_active_symbols
++
++    symbols = get_active_symbols()
++    if not symbols:
++        logger.warning("No active symbols found in registry.")
++        return []
++
++    logger.info("Active symbols to ingest: %s", symbols)
++    return symbols
++
++
++def download_one_by_one(symbol: str) -> dict:
+     """
+-    Read data from DuckDB and upsert into PostgreSQL prices table.
+-    Skipped gracefully if POSTGRES_URL is not set.
++    Download from yfinance -> store to DuckDB -> push to PostgreSQL.
++    Log result to registry.ingestion_log.
+     """
++    from app.core.etl.prices import load_prices_daily
++    from app.db.connection import get_duckdb_connection, get_postgres_engine
++    from app.db.utils import create_prices_table, insert_prices
++    from app.db.registry import log_ingestion
++    from sqlalchemy import text
++    import pandas as pd
++
++    logger.info("Processing symbol: %s", symbol)
++    rows_ingested = 0
++    status = "success"
++
++    try:
++        # 1. Download
++        df = load_prices_daily(symbol, period="5d")
++        if df is None or df.empty:
++            logger.warning("No data for %s", symbol)
++            log_ingestion(symbol, "daily", "skipped", 0)
++            return {"symbol": symbol, "status": "skipped"}
++
++        records = [
++            {
++                "symbol": symbol,
++                "timestamp": idx.to_pydatetime(),
++                "open": float(row.get("Open", 0) or 0),
++                "high": float(row.get("High", 0) or 0),
++                "low": float(row.get("Low", 0) or 0),
++                "close": float(row.get("Close", 0) or 0),
++                "volume": int(row.get("Volume", 0) or 0),
++            }
++            for idx, row in df.iterrows()
++        ]
++
++        # 2. DuckDB upsert
++        with get_duckdb_connection() as conn:
++            create_prices_table(conn)
++            rows_ingested = insert_prices(conn, records)
++
++        # 3. PostgreSQL push
+     postgres_url = os.getenv("POSTGRES_URL")
+-    if not postgres_url:
+-        logger.warning(
+-            "Task 3 — POSTGRES_URL not set. Skipping PostgreSQL push. "
+-            "Set POSTGRES_URL in .env to enable this task."
+-        )
+-        context["ti"].xcom_push(key="pg_rows", value=0)
+-        return {"pg_rows": 0, "skipped": True}
+-
+-    from sqlalchemy import create_engine, text
+-
+-    from scripts.pg_loader import fetch_from_duckdb
+-
+-    symbols = (
+-        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+-        or _get_symbols()
+-    )
+-    logger.info("Task 3 — pushing DuckDB → PostgreSQL for: %s", symbols)
+-
+-    # Fetch last 30 days from DuckDB
+-    df = fetch_from_duckdb(symbols, days_back=30)
+-    if df.empty:
+-        logger.warning("Task 3 — DuckDB returned no rows. Nothing to push.")
+-        context["ti"].xcom_push(key="pg_rows", value=0)
+-        return {"pg_rows": 0}
+-
+-    engine = create_engine(postgres_url, pool_pre_ping=True)
+-    try:
+-        # Ensure prices table exists in PostgreSQL
+-        with engine.begin() as conn:
+-            conn.execute(
+-                text(
+-                    """
++        if postgres_url:
++            with get_postgres_engine() as engine:
++                with engine.begin() as conn:
++                    conn.execute(text("""
+                 CREATE TABLE IF NOT EXISTS prices (
+                     symbol    VARCHAR(20)  NOT NULL,
+                     timestamp TIMESTAMPTZ NOT NULL,
+@@ -230,13 +133,14 @@
+                     volume    BIGINT,
+                     PRIMARY KEY (symbol, timestamp)
+                 )
+-            """
+-                )
+-            )
+-
+-        # Upsert via staging temp table
+-        with engine.begin() as conn:
+-            df.to_sql("prices_etl_tmp", conn, if_exists="replace", index=False)
+-            conn.execute(
+-                text(
+-                    """
++                    """))
++
++                    df_tmp = pd.DataFrame(records)
++                    # PostgreSQL doesn't support temp tables easily with pandas so we write it to a physical tmp table and merge
++                    table_name = f"prices_etl_tmp_{symbol.replace('-','_')}"
++                    df_tmp.to_sql(table_name, conn, if_exists="replace", index=False)
++
++                    conn.execute(text(f"""
+                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
+                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
+-                FROM prices_etl_tmp
++                FROM {table_name}
+                 ON CONFLICT (symbol, timestamp) DO UPDATE SET
+                     open   = EXCLUDED.open,
+@@ -246,27 +150,14 @@
+                     close  = EXCLUDED.close,
+                     volume = EXCLUDED.volume
+-            """
+-                )
+-            )
+-            conn.execute(text("DROP TABLE IF EXISTS prices_etl_tmp"))
+-
+-        pg_rows = len(df)
+-        logger.info("Task 3 complete — %d rows upserted to PostgreSQL", pg_rows)
+-        context["ti"].xcom_push(key="pg_rows", value=pg_rows)
+-        return {"pg_rows": pg_rows}
+-
++                    """))
++                    conn.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
++
+     except Exception as e:
+-        logger.error("Task 3 failed — PostgreSQL push error: %s", e)
+-        raise  # Re-raise so Airflow marks task as failed and retries
+-    finally:
+-        engine.dispose()
++        logger.error("Error processing %s: %s", symbol, e)
++        status = "failed"
++        rows_ingested = 0
+
++    log_ingestion(symbol, "daily", status, rows_ingested)
++    return {"symbol": symbol, "status": status, "rows_ingested": rows_ingested}
+
+-# ─────────────────────────────────────────────────────────────────────────────
+-# Task 4: Validate PostgreSQL
+-# ─────────────────────────────────────────────────────────────────────────────
+
+
+ def validate_postgres(**context) -> dict:
+@@ -279,7 +170,7 @@
+     from sqlalchemy import create_engine, text
+
+     symbols = (
+-        context["ti"].xcom_pull(key="symbols", task_ids="download_prices")
+-        or _get_symbols()
++        context["ti"].xcom_pull(task_ids="get_active_symbols")
+     )
++    if not symbols: return {}
+     engine = create_engine(postgres_url, pool_pre_ping=True)
+
+@@ -321,7 +212,6 @@
+     except Exception as e:
+         logger.error("Task 4 — validation query error: %s", e)
+         raise
+     finally:
+         engine.dispose()
+
+
+@@ -342,21 +232,15 @@
+ ) as dag:
+
+-    t1_download = PythonOperator(
+-        task_id="download_prices",
+-        python_callable=download_prices,
+-        doc_md="Download daily OHLCV from yfinance for all symbols in symbols.toml",
+-    )
+-
+-    t2_duckdb = PythonOperator(
+-        task_id="store_to_duckdb",
+-        python_callable=store_to_duckdb,
+-        doc_md="Upsert downloaded prices into local DuckDB (persistent cache)",
++    t1_active_symbols = PythonOperator(
++        task_id="get_active_symbols",
++        python_callable=get_active_symbols_task,
++        doc_md="Fetch active symbols from registry",
+     )
+
+-    t3_postgres = PythonOperator(
+-        task_id="push_to_postgres",
+-        python_callable=push_to_postgres,
+-        doc_md="Read DuckDB → upsert into PostgreSQL prices table",
++    t2_download = PythonOperator.partial(
++        task_id="download_one_by_one",
++        python_callable=download_one_by_one,
++        doc_md="Download yfinance -> DuckDB -> Postgres -> Log (Parallel via Expand)",
++    ).expand(op_args=t1_active_symbols.output.map(lambda s: [s]))
+     )
+
+     t4_validate = PythonOperator(
+@@ -371,2 +255,2 @@
+     # Pipeline: download → duckdb → postgres → validate → dbt
+-    t1_download >> t2_duckdb >> t3_postgres >> t4_validate >> t5_dbt
++    t1_active_symbols >> t2_download >> t4_validate >> t5_dbt

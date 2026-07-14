@@ -1,4 +1,7 @@
-"""
+import os
+
+with open("airflow/dags/etl_prices_dag.py", "w") as f:
+    f.write('''"""
 Phase 2 & 10: ETL Prices DAG — Kafka-style Sequential Ingestion
 
 Apache Airflow DAG for scheduled daily stock price ingestion for all active tickers.
@@ -13,14 +16,11 @@ Schedule: Daily at 08:00 UTC  (cron: '0 8 * * *')
 """
 
 import logging
-def list_wrap(x):
-    return [x]
-
 import os
 from datetime import datetime, timedelta
 
-from airflow.providers.standard.operators.bash import BashOperator
-from airflow.providers.standard.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
+from airflow.operators.python import PythonOperator
 
 from airflow import DAG
 
@@ -48,7 +48,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
     Log result to registry.ingestion_log.
     """
     from app.core.etl.prices import load_prices_daily
-    from app.db.connection import get_duckdb_connection, get_db_engine
+    from app.db.connection import get_duckdb_connection, get_postgres_engine
     from app.db.utils import create_prices_table, insert_prices
     from app.db.registry import log_ingestion
     from sqlalchemy import text
@@ -87,7 +87,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
         # 3. PostgreSQL push
         postgres_url = os.getenv("POSTGRES_URL")
         if postgres_url:
-            with get_db_engine() as engine:
+            with get_postgres_engine() as engine:
                 with engine.begin() as conn:
                     conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS prices (
@@ -103,17 +103,13 @@ def download_one_by_one(symbol: str, **context) -> dict:
                     """))
 
                     df_tmp = pd.DataFrame(records)
-
-                    import re
-                    clean_sym = re.sub(r'[^a-zA-Z0-9_]', '_', symbol).lower()
-                    table_name = f"prices_etl_tmp_{clean_sym}"
-
+                    table_name = f"prices_etl_tmp_{symbol.replace('-','_')}"
                     df_tmp.to_sql(table_name, conn, if_exists="replace", index=False)
 
                     conn.execute(text(f"""
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
-                FROM "{table_name}"
+                FROM {table_name}
                 ON CONFLICT (symbol, timestamp) DO UPDATE SET
                     open   = EXCLUDED.open,
                     high   = EXCLUDED.high,
@@ -121,7 +117,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
                     """))
-                    conn.execute(text(f'DROP TABLE IF EXISTS "{table_name}"'))
+                    conn.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
 
     except Exception as e:
         logger.error("Error processing %s: %s", symbol, e)
@@ -196,7 +192,7 @@ with DAG(
     dag_id="etl_prices_dag",
     default_args=default_args,
     description="Daily ETL: yfinance → DuckDB → PostgreSQL (Dynamic)",
-    schedule="0 8 * * *",
+    schedule_interval="0 8 * * *",
     catchup=False,
     max_active_runs=1,
     tags=["price-data", "yfinance", "duckdb", "postgres"],
@@ -212,7 +208,7 @@ with DAG(
         task_id="download_one_by_one",
         python_callable=download_one_by_one,
         doc_md="Download yfinance -> DuckDB -> Postgres -> Log (Parallel via Expand)",
-    ).expand(op_args=t1_active_symbols.output.map(list_wrap))
+    ).expand(op_args=t1_active_symbols.output.map(lambda s: [s]))
 
     t4_validate = PythonOperator(
         task_id="validate_postgres",
@@ -227,3 +223,4 @@ with DAG(
     )
 
     t1_active_symbols >> t2_download >> t4_validate >> t5_dbt
+''')

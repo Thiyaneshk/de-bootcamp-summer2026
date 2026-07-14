@@ -64,6 +64,12 @@ def main():
             url_path="assistant_chat",
         ),
         st.Page(
+            import_module("app.views.page_07_ticker_registry").main,
+            title="Ticker Registry",
+            icon="📋",
+            url_path="ticker_registry",
+        ),
+        st.Page(
             import_module("app.views.page_99_admin").main,
             title="Admin",
             icon="⚙️",

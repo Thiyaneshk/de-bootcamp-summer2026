@@ -36,7 +36,16 @@ class AppConfig:
 
     @property
     def symbols(self) -> list[str]:
-        """Get list of market symbols to track."""
+        """Get list of market symbols to track from the registry or symbols.toml fallback."""
+        try:
+            from app.db.registry import get_active_symbols
+
+            active_symbols = get_active_symbols()
+            if active_symbols:
+                return active_symbols
+        except Exception:
+            pass
+
         try:
             # Locate symbols.toml in parent project directory config folder
             project_root = Path(__file__).parent.parent

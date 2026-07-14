@@ -16,6 +16,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "toml>=0.10.2",
     "redis>=5.0.0",
+    "html5lib>=1.1",
+    "lxml>=6.1.1",
 ]
 
 [project.optional-dependencies]
