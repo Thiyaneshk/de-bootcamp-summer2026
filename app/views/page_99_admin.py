@@ -10,9 +10,13 @@ import subprocess
 from pathlib import Path
 
 import duckdb
-import ollama
 import streamlit as st
 from sqlalchemy import create_engine, text
+
+try:
+    import ollama
+except (ImportError, ModuleNotFoundError):
+    ollama = None
 
 from app.config import AppConfig
 from scripts.refresh_data import refresh_all, refresh_symbols
@@ -91,6 +95,10 @@ def check_postgres_status(pg_url: str) -> dict:
 def check_ollama_status() -> dict:
     """Check Ollama service connection and installed models."""
     status = {"running": False, "models": [], "error": None}
+    if ollama is None:
+        status["error"] = "Ollama package is not installed in this environment."
+        return status
+
     try:
         models_data = ollama.list()
         status["running"] = True

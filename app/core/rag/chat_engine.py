@@ -8,7 +8,11 @@ PostgreSQL database and answer financial questions using a local Ollama LLM.
 import logging
 import re
 
-import ollama
+try:
+    import ollama
+except (ImportError, ModuleNotFoundError):
+    ollama = None
+
 import pandas as pd
 from sqlalchemy import text
 
@@ -22,6 +26,9 @@ def get_ollama_response(prompt: str, model: str = "mistral") -> str:
     """
     Get response from local Ollama LLM.
     """
+    if ollama is None:
+        return "Ollama package is not installed in this environment."
+
     try:
         response = ollama.generate(model=model, prompt=prompt)
         return response.get("response", "No response returned from model.")
@@ -207,6 +214,16 @@ RETRIEVED DATABASE CONTEXT:
 
     # Append the current query
     messages.append({"role": "user", "content": query})
+
+    if ollama is None:
+        return {
+            "response": (
+                "⚠️ Ollama is not available in this environment. "
+                "Install the optional dependency to enable chat responses."
+            ),
+            "data_context": context,
+            "model": model,
+        }
 
     try:
         # Call Ollama Chat API

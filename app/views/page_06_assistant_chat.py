@@ -5,7 +5,11 @@ Interactive Chat Interface using Streamlit conversational UI and RAG over
 PostgreSQL database tables.
 """
 
-import ollama
+try:
+    import ollama
+except (ImportError, ModuleNotFoundError):
+    ollama = None
+
 import streamlit as st
 
 from app.core.rag.chat_engine import chat_with_rag
@@ -13,6 +17,9 @@ from app.core.rag.chat_engine import chat_with_rag
 
 def get_available_models() -> list[str]:
     """Dynamically query Ollama for installed models, with fallbacks."""
+    if ollama is None:
+        return ["gemma4:latest", "mistral"]
+
     try:
         models_data = ollama.list()
         names = [m.model for m in models_data.models]
