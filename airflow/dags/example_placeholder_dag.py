@@ -2,11 +2,11 @@
 Phase 2: Example Placeholder DAG
 
 Simple placeholder DAG for testing Airflow setup.
-
-TODO: Replace with actual ETL logic or remove after testing.
 """
 
 from datetime import datetime
+
+from airflow.operators.bash import BashOperator
 
 from airflow import DAG
 
@@ -18,5 +18,8 @@ dag = DAG(
     catchup=False,
 )
 
-
-# TODO: Define placeholder tasks
+hello_task = BashOperator(
+    task_id="hello_task",
+    bash_command="echo 'DAG is working!'",
+    dag=dag,
+)

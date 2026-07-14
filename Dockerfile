@@ -28,7 +28,8 @@ RUN pip install --no-cache-dir \
     "numpy>=1.24.0" \
     psycopg2-binary \
     toml \
-    python-dotenv
+    python-dotenv \
+    redis>=5.0.0
 
 # Copy the full project
 COPY . .
