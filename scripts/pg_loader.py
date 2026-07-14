@@ -24,6 +24,7 @@ DUCKDB_PATH = os.getenv("DUCKDB_PATH", "data/app.duckdb")
 
 # ── DuckDB read ───────────────────────────────────────────────────────────────
 
+
 def fetch_from_duckdb(symbols: list[str], days_back: int = 7) -> pd.DataFrame:
     """
     Read recent price data from DuckDB for the given symbols.
@@ -74,6 +75,7 @@ def fetch_from_duckdb(symbols: list[str], days_back: int = 7) -> pd.DataFrame:
 
 # ── yfinance → DuckDB → PostgreSQL pipeline ───────────────────────────────────
 
+
 def refresh_and_sync(
     symbols: list[str],
     pg_url: str,
@@ -112,15 +114,17 @@ def refresh_and_sync(
 
                 records = []
                 for idx, row in df.iterrows():
-                    records.append({
-                        "symbol":    sym,
-                        "timestamp": idx.to_pydatetime(),
-                        "open":      float(row.get("Open", 0) or 0),
-                        "high":      float(row.get("High", 0) or 0),
-                        "low":       float(row.get("Low", 0) or 0),
-                        "close":     float(row.get("Close", 0) or 0),
-                        "volume":    int(row.get("Volume", 0) or 0),
-                    })
+                    records.append(
+                        {
+                            "symbol": sym,
+                            "timestamp": idx.to_pydatetime(),
+                            "open": float(row.get("Open", 0) or 0),
+                            "high": float(row.get("High", 0) or 0),
+                            "low": float(row.get("Low", 0) or 0),
+                            "close": float(row.get("Close", 0) or 0),
+                            "volume": int(row.get("Volume", 0) or 0),
+                        }
+                    )
 
                 inserted = insert_prices(duck_conn, records)
                 result["yf_rows"] += inserted
@@ -139,14 +143,18 @@ def refresh_and_sync(
     try:
         df_all = fetch_from_duckdb(symbols, days_back=30)
         if df_all.empty:
-            logger.warning("Nothing to push to PostgreSQL — DuckDB query returned empty")
+            logger.warning(
+                "Nothing to push to PostgreSQL — DuckDB query returned empty"
+            )
             return result
 
         engine = create_engine(pg_url, pool_pre_ping=True)
 
         # Ensure table exists in Postgres
         with engine.begin() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 CREATE TABLE IF NOT EXISTS prices (
                     symbol    VARCHAR(20)  NOT NULL,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -157,12 +165,15 @@ def refresh_and_sync(
                     volume    BIGINT,
                     PRIMARY KEY (symbol, timestamp)
                 )
-            """))
+            """
+                )
+            )
 
         # Upsert via temp table
         with engine.begin() as conn:
             df_all.to_sql("prices_tmp", conn, if_exists="replace", index=False)
-            upsert = text("""
+            upsert = text(
+                """
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM prices_tmp
@@ -172,7 +183,8 @@ def refresh_and_sync(
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-            """)
+            """
+            )
             conn.execute(upsert)
             conn.execute(text("DROP TABLE IF EXISTS prices_tmp"))
 
@@ -190,7 +202,10 @@ def refresh_and_sync(
 
 # ── Convenience aliases used by schedule_pg_sync.py ──────────────────────────
 
-def sync_symbols_to_postgres(symbols: list[str], pg_url: str | None = None, period: str = "5d") -> dict:
+
+def sync_symbols_to_postgres(
+    symbols: list[str], pg_url: str | None = None, period: str = "5d"
+) -> dict:
     """Convenience wrapper — pulls POSTGRES_URL from env if not provided."""
     url = pg_url or os.getenv("POSTGRES_URL", "")
     if not url:
@@ -216,6 +231,11 @@ def sync_all_from_config(pg_url: str | None = None, period: str = "5d") -> dict:
 
     if not symbols:
         logger.warning("No symbols found in symbols.toml [default] section")
-        return {"symbols": [], "yf_rows": 0, "pg_rows": 0, "errors": ["No symbols configured"]}
+        return {
+            "symbols": [],
+            "yf_rows": 0,
+            "pg_rows": 0,
+            "errors": ["No symbols configured"],
+        }
 
     return sync_symbols_to_postgres(symbols, pg_url=pg_url, period=period)

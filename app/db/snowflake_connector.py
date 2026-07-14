@@ -1,4 +1,5 @@
 """Snowflake connection — production data warehouse for Phase 7+."""
+
 import os
 
 import pandas as pd
@@ -14,6 +15,7 @@ def get_snowflake_connection():
         database=os.getenv("SNOWFLAKE_DATABASE", "BOOTCAMP_DB"),
         schema=os.getenv("SNOWFLAKE_SCHEMA", "RAW"),
     )
+
 
 def query_snowflake(sql: str) -> pd.DataFrame:
     conn = get_snowflake_connection()
