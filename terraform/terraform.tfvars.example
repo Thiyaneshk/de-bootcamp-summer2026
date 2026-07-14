@@ -1,0 +1,4 @@
+gcp_project_id     = "your-gcp-project-id"
+gcp_region         = "northamerica-northeast2"
+snowflake_database = "BOOTCAMP_DB"
+snowflake_warehouse = "COMPUTE_WH"

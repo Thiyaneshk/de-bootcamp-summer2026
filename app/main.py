@@ -14,12 +14,13 @@ from app.config import AppConfig
 
 def main():
     """Main Streamlit app entry point."""
-    # TODO: Load config
-    config = AppConfig()
+    # Load config
+    if "config" not in st.session_state:
+        st.session_state.config = AppConfig()
 
-    # TODO: Setup page configuration
+    # Setup page configuration
     st.set_page_config(
-        page_title=config.app_name,
+        page_title=st.session_state.config.app_name,
         page_icon="📊",
         layout="wide",
         initial_sidebar_state="expanded",
