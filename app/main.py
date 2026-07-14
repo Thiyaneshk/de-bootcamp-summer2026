@@ -71,6 +71,18 @@ def main():
         ),
     ]
 
+    # ── Sidebar branding ──────────────────────────────────────────────────────
+    with st.sidebar:
+        st.markdown(
+            """
+            <div style="padding:8px 0 12px;border-bottom:1px solid #334155;margin-bottom:8px">
+                <span style="font-size:1.2rem;font-weight:800;color:#e2e8f0">📊 DE Bootcamp</span><br/>
+                <span style="color:#94a3b8;font-size:0.78rem">Summer 2026 · Learning Project</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     pg = st.navigation(pages)
     pg.run()
 

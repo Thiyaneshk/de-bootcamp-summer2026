@@ -64,54 +64,25 @@ def load_db_stats() -> dict:
         if not _table_exists(conn, "prices"):
             conn.close()
             return {}
-        rows = conn.execute(
-            """
-            SELECT
-                COUNT(*)                                   AS total_rows,
-                COUNT(DISTINCT symbol)                     AS symbols,
-                MIN(timestamp)::DATE                       AS earliest,
-                MAX(timestamp)::DATE                       AS latest,
-                ROUND(pg_total_relation_size_ignore(), 2)  AS db_size_mb
-            FROM prices
-        """
+        r = conn.execute(
+            "SELECT COUNT(*), COUNT(DISTINCT symbol), MIN(timestamp), MAX(timestamp) FROM prices"
         ).fetchone()
         conn.close()
-        # pg_total_relation_size_ignore doesn't exist in DuckDB — get file size separately
         size_mb = (
             round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2)
             if os.path.exists(DUCKDB_PATH)
             else 0
         )
         return {
-            "total_rows": rows[0],
-            "symbols": rows[1],
-            "earliest": str(rows[2]),
-            "latest": str(rows[3]),
+            "total_rows": r[0],
+            "symbols": r[1],
+            "earliest": str(r[2])[:10] if r[2] else "—",
+            "latest": str(r[3])[:10] if r[3] else "—",
             "size_mb": size_mb,
         }
-    except Exception:
-        # Simpler fallback
-        try:
-            conn = _duck_connect()
-            r = conn.execute(
-                "SELECT COUNT(*), COUNT(DISTINCT symbol), MIN(timestamp), MAX(timestamp) FROM prices"
-            ).fetchone()
-            conn.close()
-            size_mb = (
-                round(os.path.getsize(DUCKDB_PATH) / 1_048_576, 2)
-                if os.path.exists(DUCKDB_PATH)
-                else 0
-            )
-            return {
-                "total_rows": r[0],
-                "symbols": r[1],
-                "earliest": str(r[2])[:10] if r[2] else "—",
-                "latest": str(r[3])[:10] if r[3] else "—",
-                "size_mb": size_mb,
-            }
-        except Exception as e:
-            logger.warning("Stats query failed: %s", e)
-            return {}
+    except Exception as e:
+        logger.warning("Stats query failed: %s", e)
+        return {}
 
 
 def load_prices_from_duck(

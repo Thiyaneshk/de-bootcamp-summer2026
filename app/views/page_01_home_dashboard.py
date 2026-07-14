@@ -127,6 +127,43 @@ PHASES = [
             "interface that analyses stock data and answers natural-language questions."
         ),
     },
+    {
+        "id": 6,
+        "title": "Phase 6: Redis Caching Layer",
+        "icon": "⚡",
+        "time": "1 hour",
+        "tech": "Redis · Docker · Python pickle",
+        "nav_page": None,
+        "status": "completed",
+        "tasks": [
+            ("Redis Docker service in docker-compose.yml", True),
+            ("redis_cache decorator (app/core/cache/redis_cache.py)", True),
+            ("Replace @st.cache_data with @redis_cache in ETL", True),
+        ],
+        "description": (
+            "Replace Streamlit memory cache with a distributed Redis cache "
+            "for multi-instance scaling and persistence across restarts."
+        ),
+    },
+    {
+        "id": 7,
+        "title": "Phase 7: Snowflake Cloud DW",
+        "icon": "❄️",
+        "time": "1.5 hours",
+        "tech": "Snowflake · snowflake-connector-python · dbt-snowflake",
+        "nav_page": None,
+        "status": "completed",
+        "tasks": [
+            ("Snowflake connector (app/db/snowflake_connector.py)", True),
+            ("Database Router with DB_BACKEND=snowflake", True),
+            ("dbt snowflake target in profiles.yml", True),
+            ("Terraform scaffold for Snowflake resources", True),
+        ],
+        "description": (
+            "Transition from local PostgreSQL to Snowflake cloud data warehouse "
+            "with separate compute and storage scaling."
+        ),
+    },
 ]
 
 STATUS_META = {
@@ -143,6 +180,8 @@ QUICK_LINKS = [
     ("📄 Phase 3 Docs", "docs/PHASE_3_DBT.md"),
     ("📄 Phase 4 Docs", "docs/PHASE_4_ANALYTICS.md"),
     ("📄 Phase 5 Docs", "docs/PHASE_5_LLM_RAG.md"),
+    ("⚡ Phase 6 Docs (Redis)", "docs/PHASE_6_REDIS.md"),
+    ("❄️ Phase 7 Docs (Snowflake)", "docs/PHASE_7_SNOWFLAKE.md"),
 ]
 
 TECH_STACK = [
@@ -151,9 +190,11 @@ TECH_STACK = [
     ("yfinance", "≥0.2.40"),
     ("DuckDB", "≥1.0.0"),
     ("PostgreSQL", "15"),
-    ("Airflow", "2.10.2"),
+    ("Airflow", "3.3.0"),
     ("dbt", "1.9.0+"),
     ("Plotly", "≥6.6.0"),
+    ("Redis", "≥5.0.0"),
+    ("Snowflake", "latest"),
     ("Ollama", "latest"),
     ("uv", "latest"),
 ]
@@ -249,6 +290,8 @@ def main() -> None:
                 <span style="background:#0ea5e922;color:#7dd3fc;border:1px solid #0ea5e955;border-radius:20px;padding:4px 14px;font-size:0.85rem">Streamlit</span>
                 <span style="background:#10b98122;color:#6ee7b7;border:1px solid #10b98155;border-radius:20px;padding:4px 14px;font-size:0.85rem">Airflow</span>
                 <span style="background:#f59e0b22;color:#fcd34d;border:1px solid #f59e0b55;border-radius:20px;padding:4px 14px;font-size:0.85rem">dbt</span>
+                <span style="background:#ef444422;color:#fca5a5;border:1px solid #ef444455;border-radius:20px;padding:4px 14px;font-size:0.85rem">Redis</span>
+                <span style="background:#38bdf822;color:#7dd3fc;border:1px solid #38bdf855;border-radius:20px;padding:4px 14px;font-size:0.85rem">Snowflake</span>
                 <span style="background:#ec489922;color:#f9a8d4;border:1px solid #ec489955;border-radius:20px;padding:4px 14px;font-size:0.85rem">Ollama LLM</span>
             </div>
         </div>
@@ -293,17 +336,13 @@ def main() -> None:
     with right:
         # ── Quick start ────────────────────────────────────────────────────
         st.subheader("🚀 Quick Start")
-        st.markdown(
-            """
-            <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px">
-                <pre style="color:#86efac;font-size:0.78rem;margin:0;white-space:pre-wrap"># Phase 1 – run locally
-uv sync --extra phase1
-uv run streamlit run app/main.py
-
-# Open → http://localhost:8501</pre>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        st.code(
+            "# Phase 1 – run locally\n"
+            "uv sync --extra phase1\n"
+            "uv run streamlit run app/main.py\n"
+            "\n"
+            "# Open → http://localhost:8501",
+            language="bash",
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -352,10 +391,10 @@ uv run streamlit run app/main.py
     nav_pages = [
         ("📈 Stock Overview", "Phase 1 · Load & chart OHLCV data", "✅ Ready"),
         ("🔍 Data Explorer", "Phase 1 · Raw data tables & CSV export", "✅ Ready"),
-        ("📊 Indicators", "Phase 3 · dbt-powered technical indicators", "🔶 Stub"),
-        ("📉 Analysis", "Phase 4 · Analytics dashboards", "⬜ Pending"),
-        ("🤖 Assistant Chat", "Phase 5 · Local LLM / RAG analysis", "⬜ Pending"),
-        ("⚙️ Admin", "Phase 1+ · DB status & data refresh", "🔶 Stub"),
+        ("📊 Indicators", "Phase 3 · dbt-powered technical indicators", "✅ Ready"),
+        ("📉 Analysis", "Phase 4 · Analytics dashboards", "✅ Ready"),
+        ("🤖 Assistant Chat", "Phase 5 · Local LLM / RAG analysis", "✅ Ready"),
+        ("⚙️ Admin", "Phase 1+ · DB status & data refresh", "✅ Ready"),
     ]
     for i, (title, desc, badge) in enumerate(nav_pages):
         with nav_cols[i % 3]:
