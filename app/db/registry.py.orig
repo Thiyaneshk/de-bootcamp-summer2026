@@ -39,7 +39,7 @@ def _ensure_schema_sql() -> str:
         PRIMARY KEY (index_symbol, stock_symbol)
     );
     CREATE TABLE IF NOT EXISTS ingestion_log (
-        id INTEGER,
+        id SERIAL PRIMARY KEY,
         symbol VARCHAR(50) NOT NULL,
         ingestion_type VARCHAR(20),
         status VARCHAR(20),
@@ -48,10 +48,6 @@ def _ensure_schema_sql() -> str:
         completed_at TIMESTAMP
     );
     """
-
-
-def _ensure_schema_sql_postgres() -> str:
-    return _ensure_schema_sql().replace("id INTEGER", "id SERIAL PRIMARY KEY")
 
 
 def init_registry_tables(connection: Any | None = None) -> None:
@@ -63,7 +59,7 @@ def init_registry_tables(connection: Any | None = None) -> None:
             if engine is None:
                 return
             with engine.begin() as conn:
-                conn.execute(text(_ensure_schema_sql_postgres()))
+                conn.execute(text(_ensure_schema_sql()))
             engine.dispose()
         else:
             with get_duckdb_connection() as conn:
@@ -72,7 +68,7 @@ def init_registry_tables(connection: Any | None = None) -> None:
 
     if hasattr(connection, "connect") and not isinstance(connection, duckdb.DuckDBPyConnection):
         with connection.begin() as conn:
-            conn.execute(text(_ensure_schema_sql_postgres()))
+            conn.execute(text(_ensure_schema_sql()))
         return
 
     connection.execute(_ensure_schema_sql())

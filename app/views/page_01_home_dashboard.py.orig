@@ -164,22 +164,6 @@ PHASES = [
             "with separate compute and storage scaling."
         ),
     },
-    {
-        "id": 10,
-        "title": "Phase 10: Ticker Registry",
-        "icon": "📋",
-        "time": "1.5 hours",
-        "tech": "PostgreSQL · Airflow Dynamic Tasks · Streamlit",
-        "nav_page": "Ticker Registry",
-        "status": "completed",
-        "tasks": [
-            ("Create registry database tables", True),
-            ("Build Streamlit UI to manage tickers", True),
-            ("Refactor Airflow DAG to use dynamic task mapping (expand)", True),
-            ("Log daily ingestions and index membership", True),
-        ],
-        "description": "Store tracked symbols in a database registry instead of a flat file. Use Airflow dynamic mapping for scalable parallel ingestion.",
-    },
 ]
 
 STATUS_META = {
