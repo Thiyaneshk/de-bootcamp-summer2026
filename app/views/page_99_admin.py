@@ -19,6 +19,7 @@ except (ImportError, ModuleNotFoundError):
     ollama = None
 
 from app.config import AppConfig
+from app.db.registry import get_instruments, set_instrument_active
 from scripts.refresh_data import refresh_all, refresh_symbols
 
 logger = logging.getLogger(__name__)
@@ -217,6 +218,39 @@ def main():
                 )
                 st.markdown(f"**Connection Error:** `{oll_status['error']}`")
                 st.info("Ensure Ollama application is running on your Mac.")
+
+        with st.expander("🚫 Disabled Tickers", expanded=True):
+            disabled_instruments = [
+                instrument
+                for instrument in get_instruments(active_only=False)
+                if not instrument.get("is_active", True)
+            ]
+
+            if not disabled_instruments:
+                st.info("No disabled tickers at the moment.")
+            else:
+                display_rows = [
+                    {
+                        "symbol": item["symbol"],
+                        "name": item.get("name", ""),
+                        "type": item.get("instrument_type", ""),
+                        "exchange": item.get("exchange", ""),
+                    }
+                    for item in disabled_instruments
+                ]
+                st.dataframe(display_rows, use_container_width=True, hide_index=True)
+
+                selected_to_reactivate = st.multiselect(
+                    "Reactivate selected disabled tickers",
+                    options=[row["symbol"] for row in display_rows],
+                    default=[],
+                )
+
+                if st.button("♻️ Reactivate Selected", disabled=not selected_to_reactivate):
+                    for symbol in selected_to_reactivate:
+                        set_instrument_active(symbol, True)
+                    st.success(f"Reactivated {len(selected_to_reactivate)} ticker(s).")
+                    st.rerun()
 
         # Cache Clear Section
         st.divider()

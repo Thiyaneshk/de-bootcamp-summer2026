@@ -50,7 +50,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
     from app.core.etl.prices import load_prices_daily
     from app.db.connection import get_duckdb_connection, get_db_engine
     from app.db.utils import create_prices_table, insert_prices
-    from app.db.registry import log_ingestion
+    from app.db.registry import log_ingestion, update_instrument_status_from_ingestion
     from sqlalchemy import text
     import pandas as pd
 
@@ -129,6 +129,7 @@ def download_one_by_one(symbol: str, **context) -> dict:
         rows_ingested = 0
 
     log_ingestion(symbol, "daily", status, rows_ingested)
+    update_instrument_status_from_ingestion(symbol, status, rows_ingested)
     return {"symbol": symbol, "status": status, "rows_ingested": rows_ingested}
 
 

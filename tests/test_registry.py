@@ -10,6 +10,7 @@ from app.db.registry import (
     init_registry_tables,
     log_ingestion,
     set_instrument_active,
+    update_instrument_status_from_ingestion,
     upsert_index_constituents,
 )
 
@@ -40,3 +41,22 @@ def test_registry_roundtrip_using_duckdb(tmp_path):
     log_ingestion("AAPL", "daily", "success", rows_ingested=10)
     history = log_ingestion("AAPL", "daily", "failed", rows_ingested=0)
     assert len(history) >= 1
+
+
+def test_ingestion_result_marks_instrument_inactive_when_missing_data(tmp_path):
+    db_path = tmp_path / "registry.duckdb"
+    os.environ["DUCKDB_PATH"] = str(db_path)
+    os.environ["POSTGRES_URL"] = ""
+
+    with duckdb.connect(str(db_path)) as conn:
+        init_registry_tables(conn)
+
+    add_instrument("MSFT", name="Microsoft", instrument_type="stock", exchange="NASDAQ", is_active=True)
+
+    update_instrument_status_from_ingestion("MSFT", "skipped", 0)
+    active_symbols = get_active_symbols()
+    assert "MSFT" not in active_symbols
+
+    set_instrument_active("MSFT", True)
+    active_symbols = get_active_symbols()
+    assert "MSFT" in active_symbols

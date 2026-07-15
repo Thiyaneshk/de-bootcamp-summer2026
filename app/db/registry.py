@@ -233,6 +233,14 @@ def get_active_symbols() -> list[str]:
     return [item["symbol"] for item in instruments if item.get("symbol")]
 
 
+def update_instrument_status_from_ingestion(symbol: str, status: str, rows_ingested: int) -> None:
+    """Disable an instrument when ingestion is skipped or fails due to missing data."""
+    if status in {"skipped", "failed"} or rows_ingested == 0:
+        set_instrument_active(symbol, False)
+    else:
+        set_instrument_active(symbol, True)
+
+
 def upsert_index_constituents(index_symbol: str, constituents: list[dict[str, Any]]) -> None:
     """Store index membership rows for a given index symbol."""
     init_registry_tables()

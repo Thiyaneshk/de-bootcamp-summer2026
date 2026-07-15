@@ -1,0 +1,194 @@
+symbol,name,instrument_type,exchange,is_active
+^NSEI,NIFTY 50,index,NSE,true
+^NSEBANK,NIFTY Bank,index,NSE,true
+^CNXIT,NIFTY IT,index,NSE,true
+^CNXAUTO,NIFTY Auto,index,NSE,true
+^CNXFMCG,NIFTY FMCG,index,NSE,true
+^CNXPHARMA,NIFTY Pharma,index,NSE,true
+^CNXMETAL,NIFTY Metal,index,NSE,true
+^CNXREALTY,NIFTY Realty,index,NSE,true
+^CNXENERGY,NIFTY Energy,index,NSE,true
+^CNXINFRA,NIFTY Infrastructure,index,NSE,true
+^NSMIDCP,NIFTY Midcap 100,index,NSE,true
+^NSEMDCP50,NIFTY Midcap 50,index,NSE,true
+^CNXSC,NIFTY Smallcap 100,index,NSE,true
+^NIFTY_NEXT_50,NIFTY Next 50,index,NSE,true
+^CNXFINANCE,NIFTY Financial Services,index,NSE,true
+^CNXPSE,NIFTY PSE,index,NSE,true
+^CNXMNCAP,NIFTY MNC,index,NSE,true
+^CNXSERVICES,NIFTY Services Sector,index,NSE,true
+^NIFTYMC150,NIFTY Midcap 150,index,NSE,true
+^NIFTYSC250,NIFTY Smallcap 250,index,NSE,true
+^NIFTY200,NIFTY 200,index,NSE,true
+^NIFTY500,NIFTY 500,index,NSE,true
+^NSEDIV,NIFTY Dividend Opportunities 50,index,NSE,true
+^CNXCOMMODITY,NIFTY Commodities,index,NSE,true
+^CNXCONSUME,NIFTY India Consumption,index,NSE,true
+^BSE30,S&P BSE SENSEX,index,BSE,true
+^BSESN,BSE SENSEX,index,BSE,true
+^BSE100,BSE 100,index,BSE,true
+^BSE200,BSE 200,index,BSE,true
+^BSE500,BSE 500,index,BSE,true
+^BSEMIDCAP,BSE MidCap,index,BSE,true
+^BSESMLCAP,BSE SmallCap,index,BSE,true
+RELIANCE.NS,Reliance Industries,stock,NSE,true
+TCS.NS,Tata Consultancy Services,stock,NSE,true
+HDFCBANK.NS,HDFC Bank,stock,NSE,true
+INFY.NS,Infosys,stock,NSE,true
+ICICIBANK.NS,ICICI Bank,stock,NSE,true
+HINDUNILVR.NS,Hindustan Unilever,stock,NSE,true
+ITC.NS,ITC,stock,NSE,true
+SBIN.NS,State Bank of India,stock,NSE,true
+BAJFINANCE.NS,Bajaj Finance,stock,NSE,true
+BHARTIARTL.NS,Bharti Airtel,stock,NSE,true
+KOTAKBANK.NS,Kotak Mahindra Bank,stock,NSE,true
+WIPRO.NS,Wipro,stock,NSE,true
+HCLTECH.NS,HCL Technologies,stock,NSE,true
+AXISBANK.NS,Axis Bank,stock,NSE,true
+ASIANPAINT.NS,Asian Paints,stock,NSE,true
+MARUTI.NS,Maruti Suzuki India,stock,NSE,true
+TITAN.NS,Titan Company,stock,NSE,true
+SUNPHARMA.NS,Sun Pharmaceutical,stock,NSE,true
+BAJAJFINSV.NS,Bajaj Finserv,stock,NSE,true
+NESTLEIND.NS,Nestle India,stock,NSE,true
+POWERGRID.NS,Power Grid Corporation,stock,NSE,true
+NTPC.NS,NTPC,stock,NSE,true
+ONGC.NS,Oil & Natural Gas Corp,stock,NSE,true
+COALINDIA.NS,Coal India,stock,NSE,true
+TATAMOTORS.NS,Tata Motors,stock,NSE,true
+TATASTEEL.NS,Tata Steel,stock,NSE,true
+JSWSTEEL.NS,JSW Steel,stock,NSE,true
+HINDALCO.NS,Hindalco Industries,stock,NSE,true
+ADANIENT.NS,Adani Enterprises,stock,NSE,true
+ADANIPORTS.NS,Adani Ports & SEZ,stock,NSE,true
+CIPLA.NS,Cipla,stock,NSE,true
+DRREDDY.NS,Dr. Reddy's Laboratories,stock,NSE,true
+DIVISLAB.NS,Divi's Laboratories,stock,NSE,true
+APOLLOHOSP.NS,Apollo Hospitals,stock,NSE,true
+TECHM.NS,Tech Mahindra,stock,NSE,true
+EICHERMOT.NS,Eicher Motors,stock,NSE,true
+BPCL.NS,Bharat Petroleum Corp,stock,NSE,true
+HEROMOTOCO.NS,Hero MotoCorp,stock,NSE,true
+INDUSINDBK.NS,IndusInd Bank,stock,NSE,true
+BRITANNIA.NS,Britannia Industries,stock,NSE,true
+GRASIM.NS,Grasim Industries,stock,NSE,true
+ULTRACEMCO.NS,UltraTech Cement,stock,NSE,true
+M&M.NS,Mahindra & Mahindra,stock,NSE,true
+BAJAJ-AUTO.NS,Bajaj Auto,stock,NSE,true
+SHREECEM.NS,Shree Cement,stock,NSE,true
+HDFCLIFE.NS,HDFC Life Insurance,stock,NSE,true
+SBILIFE.NS,SBI Life Insurance,stock,NSE,true
+TATACONSUM.NS,Tata Consumer Products,stock,NSE,true
+LT.NS,Larsen & Toubro,stock,NSE,true
+VEDL.NS,Vedanta,stock,NSE,true
+NIFTYBEES.NS,Nippon India ETF Nifty BeES,etf,NSE,true
+BANKBEES.NS,Nippon India ETF Bank BeES,etf,NSE,true
+ITBEES.NS,Nippon India ETF Infosys BeES / IT,etf,NSE,true
+JUNIORBEES.NS,Nippon India ETF Junior BeES,etf,NSE,true
+GOLDBEES.NS,Nippon India ETF Gold BeES,etf,NSE,true
+LIQUIDBEES.NS,Nippon India ETF Liquid BeES,etf,NSE,true
+MOM100.NS,Motilal Oswal Nasdaq 100 ETF,etf,NSE,true
+SETFNIFBK.NS,SBI ETF Nifty Bank,etf,NSE,true
+SETFNIF50.NS,SBI ETF Nifty 50,etf,NSE,true
+HDFCNIFTY.NS,HDFC Nifty 50 ETF,etf,NSE,true
+^GSPTSE,S&P/TSX Composite Index,index,TSX,true
+^TXCI,S&P/TSX Capped Information Technology,index,TSX,true
+^TXEN,S&P/TSX Capped Energy,index,TSX,true
+^TXFN,S&P/TSX Capped Financials,index,TSX,true
+^TXHC,S&P/TSX Capped Health Care,index,TSX,true
+^TXMT,S&P/TSX Capped Materials,index,TSX,true
+^TXUT,S&P/TSX Capped Utilities,index,TSX,true
+^TX60,S&P/TSX 60,index,TSX,true
+^TXSC,S&P/TSX SmallCap,index,TSX,true
+RY.TO,Royal Bank of Canada,stock,TSX,true
+TD.TO,Toronto-Dominion Bank,stock,TSX,true
+ENB.TO,Enbridge,stock,TSX,true
+CNR.TO,Canadian National Railway,stock,TSX,true
+CP.TO,Canadian Pacific Kansas City,stock,TSX,true
+BNS.TO,Bank of Nova Scotia,stock,TSX,true
+BMO.TO,Bank of Montreal,stock,TSX,true
+SU.TO,Suncor Energy,stock,TSX,true
+CNQ.TO,Canadian Natural Resources,stock,TSX,true
+SHOP.TO,Shopify,stock,TSX,true
+MFC.TO,Manulife Financial,stock,TSX,true
+BCE.TO,BCE Inc.,stock,TSX,true
+T.TO,TELUS Corporation,stock,TSX,true
+ABX.TO,Barrick Gold,stock,TSX,true
+WCN.TO,Waste Connections,stock,TSX,true
+ATD.TO,Alimentation Couche-Tard,stock,TSX,true
+TRI.TO,Thomson Reuters,stock,TSX,true
+CSU.TO,Constellation Software,stock,TSX,true
+GIB-A.TO,CGI Group,stock,TSX,true
+TECK-B.TO,Teck Resources,stock,TSX,true
+XIU.TO,iShares S&P/TSX 60 Index ETF,etf,TSX,true
+XIC.TO,iShares Core S&P/TSX Capped Composite,etf,TSX,true
+XEI.TO,iShares S&P/TSX Composite High Dividend Yield,etf,TSX,true
+ZEB.TO,BMO Equal Weight Banks ETF,etf,TSX,true
+HXT.TO,Horizons S&P/TSX 60 Index ETF,etf,TSX,true
+VCN.TO,Vanguard FTSE Canada All Cap Index ETF,etf,TSX,true
+ZCN.TO,BMO S&P/TSX Capped Composite Index ETF,etf,TSX,true
+TTP.TO,TD Canadian Equity Index ETF,etf,TSX,true
+^GSPC,S&P 500,index,NYSE,true
+^DJI,Dow Jones Industrial Average,index,NYSE,true
+^IXIC,NASDAQ Composite,index,NASDAQ,true
+^NDX,NASDAQ 100,index,NASDAQ,true
+^RUT,Russell 2000,index,NYSE,true
+^VIX,CBOE Volatility Index,index,CBOE,true
+^FTSE,FTSE 100 (UK ref),index,LSE,true
+^SP500-45,S&P 500 Information Technology,index,NYSE,true
+^SP500-40,S&P 500 Financials,index,NYSE,true
+^SP500-10,S&P 500 Energy,index,NYSE,true
+^SP500-35,S&P 500 Health Care,index,NYSE,true
+^SPGSCI,S&P GSCI Commodity Index,index,NYSE,true
+^W5000,Wilshire 5000,index,NYSE,true
+^MID,S&P 400 MidCap,index,NYSE,true
+AAPL,Apple,stock,NASDAQ,true
+MSFT,Microsoft,stock,NASDAQ,true
+NVDA,NVIDIA,stock,NASDAQ,true
+AMZN,Amazon,stock,NASDAQ,true
+GOOGL,Alphabet Class A,stock,NASDAQ,true
+GOOG,Alphabet Class C,stock,NASDAQ,true
+META,Meta Platforms,stock,NASDAQ,true
+TSLA,Tesla,stock,NASDAQ,true
+BRK-B,Berkshire Hathaway B,stock,NYSE,true
+JPM,JPMorgan Chase,stock,NYSE,true
+V,Visa,stock,NYSE,true
+MA,Mastercard,stock,NYSE,true
+UNH,UnitedHealth Group,stock,NYSE,true
+XOM,ExxonMobil,stock,NYSE,true
+LLY,Eli Lilly,stock,NYSE,true
+HD,Home Depot,stock,NYSE,true
+JNJ,Johnson & Johnson,stock,NYSE,true
+PG,Procter & Gamble,stock,NYSE,true
+WMT,Walmart,stock,NYSE,true
+COST,Costco,stock,NASDAQ,true
+AVGO,Broadcom,stock,NASDAQ,true
+AMD,Advanced Micro Devices,stock,NASDAQ,true
+INTC,Intel,stock,NASDAQ,true
+CRM,Salesforce,stock,NYSE,true
+ORCL,Oracle,stock,NYSE,true
+NFLX,Netflix,stock,NASDAQ,true
+ADBE,Adobe,stock,NASDAQ,true
+PYPL,PayPal,stock,NASDAQ,true
+BAC,Bank of America,stock,NYSE,true
+GS,Goldman Sachs,stock,NYSE,true
+SPY,SPDR S&P 500 ETF Trust,etf,NYSE,true
+QQQ,Invesco QQQ Trust (Nasdaq 100),etf,NASDAQ,true
+IVV,iShares Core S&P 500 ETF,etf,NYSE,true
+VOO,Vanguard S&P 500 ETF,etf,NYSE,true
+VTI,Vanguard Total Stock Market ETF,etf,NYSE,true
+VEA,Vanguard FTSE Developed Markets ETF,etf,NYSE,true
+VWO,Vanguard FTSE Emerging Markets ETF,etf,NYSE,true
+AGG,iShares Core U.S. Aggregate Bond ETF,etf,NYSE,true
+GLD,SPDR Gold Shares,etf,NYSE,true
+SLV,iShares Silver Trust,etf,NYSE,true
+IAU,iShares Gold Trust,etf,NYSE,true
+XLK,Technology Select Sector SPDR Fund,etf,NYSE,true
+XLF,Financial Select Sector SPDR Fund,etf,NYSE,true
+XLE,Energy Select Sector SPDR Fund,etf,NYSE,true
+XLV,Health Care Select Sector SPDR Fund,etf,NYSE,true
+ARKK,ARK Innovation ETF,etf,NYSE,true
+SCHD,Schwab U.S. Dividend Equity ETF,etf,NYSE,true
+VNQ,Vanguard Real Estate ETF,etf,NYSE,true
+EEM,iShares MSCI Emerging Markets ETF,etf,NYSE,true
+BND,Vanguard Total Bond Market ETF,etf,NASDAQ,true

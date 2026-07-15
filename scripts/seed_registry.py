@@ -1,55 +1,52 @@
-"""
-Seed the Ticker Registry with initial instruments.
+"""Seed the ticker registry from a checked-in CSV data file."""
 
-Includes major indices, ETFs, and stocks for India, Canada, and the US markets.
-"""
+from __future__ import annotations
 
-from app.db.registry import add_instrument
+import csv
+from pathlib import Path
 
-def seed():
-    instruments = [
-        # Indian Market (NSE)
-        {"symbol": "^NSEI", "name": "NIFTY 50", "exchange": "NSE", "instrument_type": "index"},
-        {"symbol": "^NSEBANK", "name": "NIFTY BANK", "exchange": "NSE", "instrument_type": "index"},
-        {"symbol": "RELIANCE.NS", "name": "Reliance Industries", "exchange": "NSE", "instrument_type": "stock"},
-        {"symbol": "TCS.NS", "name": "Tata Consultancy Services", "exchange": "NSE", "instrument_type": "stock"},
-        {"symbol": "INFY.NS", "name": "Infosys", "exchange": "NSE", "instrument_type": "stock"},
-        {"symbol": "HDFCBANK.NS", "name": "HDFC Bank", "exchange": "NSE", "instrument_type": "stock"},
-        {"symbol": "SBI.NS", "name": "State Bank of India", "exchange": "NSE", "instrument_type": "stock"},
-        {"symbol": "NIFTYBEES.NS", "name": "Nippon India ETF Nifty 50 BeES", "exchange": "NSE", "instrument_type": "etf"},
+from app.db.registry import add_instrument, init_registry_tables
 
-        # Canadian Market (TSX)
-        {"symbol": "^GSPTSE", "name": "S&P/TSX Composite Index", "exchange": "TSX", "instrument_type": "index"},
-        {"symbol": "RY.TO", "name": "Royal Bank of Canada", "exchange": "TSX", "instrument_type": "stock"},
-        {"symbol": "TD.TO", "name": "Toronto-Dominion Bank", "exchange": "TSX", "instrument_type": "stock"},
-        {"symbol": "SHOP.TO", "name": "Shopify Inc.", "exchange": "TSX", "instrument_type": "stock"},
-        {"symbol": "CNR.TO", "name": "Canadian National Railway", "exchange": "TSX", "instrument_type": "stock"},
-        {"symbol": "ENB.TO", "name": "Enbridge Inc.", "exchange": "TSX", "instrument_type": "stock"},
-        {"symbol": "XIU.TO", "name": "iShares S&P/TSX 60 Index ETF", "exchange": "TSX", "instrument_type": "etf"},
+DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "ticker_registry_seed.csv"
 
-        # US Market (NYSE/NASDAQ)
-        {"symbol": "^GSPC", "name": "S&P 500", "exchange": "NYSE", "instrument_type": "index"},
-        {"symbol": "^DJI", "name": "Dow Jones Industrial Average", "exchange": "NYSE", "instrument_type": "index"},
-        {"symbol": "^IXIC", "name": "NASDAQ Composite", "exchange": "NASDAQ", "instrument_type": "index"},
-        {"symbol": "AAPL", "name": "Apple Inc.", "exchange": "NASDAQ", "instrument_type": "stock"},
-        {"symbol": "MSFT", "name": "Microsoft Corporation", "exchange": "NASDAQ", "instrument_type": "stock"},
-        {"symbol": "GOOGL", "name": "Alphabet Inc.", "exchange": "NASDAQ", "instrument_type": "stock"},
-        {"symbol": "AMZN", "name": "Amazon.com Inc.", "exchange": "NASDAQ", "instrument_type": "stock"},
-        {"symbol": "NVDA", "name": "NVIDIA Corporation", "exchange": "NASDAQ", "instrument_type": "stock"},
-        {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "exchange": "NYSE", "instrument_type": "etf"},
-        {"symbol": "QQQ", "name": "Invesco QQQ Trust", "exchange": "NASDAQ", "instrument_type": "etf"},
-        {"symbol": "DIA", "name": "SPDR Dow Jones Industrial Average ETF Trust", "exchange": "NYSE", "instrument_type": "etf"},
-    ]
 
+def load_seed_instruments() -> list[dict[str, str]]:
+    """Load instruments from the repository CSV seed file."""
+    with DATA_FILE.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        return [
+            {
+                "symbol": row["symbol"],
+                "name": row["name"],
+                "instrument_type": row["instrument_type"],
+                "exchange": row["exchange"],
+                "is_active": row.get("is_active", "true").lower() == "true",
+            }
+            for row in reader
+        ]
+
+
+def seed() -> dict[str, int]:
+    """Seed the registry and return a simple summary for tests and CI."""
+    init_registry_tables()
     print("Seeding Ticker Registry...")
+
+    instruments = load_seed_instruments()
+
+    inserted = 0
+    errors = 0
     for inst in instruments:
         try:
             add_instrument(**inst)
+            inserted += 1
             print(f"Added {inst['symbol']} - {inst['name']} ({inst['instrument_type']})")
-        except Exception as e:
-            print(f"Error adding {inst['symbol']}: {e}")
+        except Exception as exc:  # pragma: no cover - defensive logging
+            errors += 1
+            print(f"Error adding {inst['symbol']}: {exc}")
 
-    print("Seeding complete.")
+    print(f"Seeding complete. Added {inserted}/{len(instruments)} instruments.")
+    return {"inserted": inserted, "errors": errors, "total": len(instruments)}
+
 
 if __name__ == "__main__":
     seed()
