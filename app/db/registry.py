@@ -13,10 +13,18 @@ from app.db.connection import get_duckdb_connection
 
 
 def _get_postgres_engine():
+    """Return a PostgreSQL engine or None if unavailable."""
     postgres_url = os.getenv("POSTGRES_URL")
     if not postgres_url:
         return None
-    return create_engine(postgres_url, pool_pre_ping=True)
+    try:
+        engine = create_engine(postgres_url, pool_pre_ping=True)
+        # Quick connection test — if PG is down, fall back to DuckDB
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return engine
+    except Exception:
+        return None
 
 
 def _ensure_schema_sql() -> str:
@@ -56,12 +64,9 @@ def _ensure_schema_sql_postgres() -> str:
 
 def init_registry_tables(connection: Any | None = None) -> None:
     """Create the registry tables in DuckDB or PostgreSQL."""
-    postgres_url = os.getenv("POSTGRES_URL")
     if connection is None:
-        if postgres_url:
-            engine = _get_postgres_engine()
-            if engine is None:
-                return
+        engine = _get_postgres_engine()
+        if engine:
             with engine.begin() as conn:
                 conn.execute(text(_ensure_schema_sql_postgres()))
             engine.dispose()
@@ -88,11 +93,8 @@ def add_instrument(
     """Insert or update an instrument record."""
     init_registry_tables()
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    postgres_url = os.getenv("POSTGRES_URL")
-    if postgres_url:
-        engine = _get_postgres_engine()
-        if engine is None:
-            return {}
+    engine = _get_postgres_engine()
+    if engine:
         with engine.begin() as conn:
             conn.execute(
                 text(
@@ -151,11 +153,8 @@ def get_instruments(
 ) -> list[dict[str, Any]]:
     """Return registered instruments as a list of dictionaries."""
     init_registry_tables()
-    postgres_url = os.getenv("POSTGRES_URL")
-    if postgres_url:
-        engine = _get_postgres_engine()
-        if engine is None:
-            return []
+    engine = _get_postgres_engine()
+    if engine:
         with engine.connect() as conn:
             query = "SELECT symbol, name, instrument_type, exchange, is_active FROM instruments"
             if instrument_type:
@@ -206,11 +205,8 @@ def get_instruments(
 def set_instrument_active(symbol: str, is_active: bool) -> None:
     """Toggle an instrument's active flag."""
     init_registry_tables()
-    postgres_url = os.getenv("POSTGRES_URL")
-    if postgres_url:
-        engine = _get_postgres_engine()
-        if engine is None:
-            return
+    engine = _get_postgres_engine()
+    if engine:
         with engine.begin() as conn:
             conn.execute(
                 text(
@@ -244,11 +240,8 @@ def update_instrument_status_from_ingestion(symbol: str, status: str, rows_inges
 def upsert_index_constituents(index_symbol: str, constituents: list[dict[str, Any]]) -> None:
     """Store index membership rows for a given index symbol."""
     init_registry_tables()
-    postgres_url = os.getenv("POSTGRES_URL")
-    if postgres_url:
-        engine = _get_postgres_engine()
-        if engine is None:
-            return
+    engine = _get_postgres_engine()
+    if engine:
         with engine.begin() as conn:
             for item in constituents:
                 conn.execute(
@@ -303,11 +296,8 @@ def log_ingestion(
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     completed = completed_at or datetime.now(timezone.utc)
     completed_str = completed.strftime("%Y-%m-%d %H:%M:%S")
-    postgres_url = os.getenv("POSTGRES_URL")
-    if postgres_url:
-        engine = _get_postgres_engine()
-        if engine is None:
-            return []
+    engine = _get_postgres_engine()
+    if engine:
         with engine.begin() as conn:
             conn.execute(
                 text(

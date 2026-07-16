@@ -173,12 +173,14 @@ PHASES = [
         "nav_page": "Ticker Registry",
         "status": "completed",
         "tasks": [
-            ("Create registry database tables", True),
-            ("Build Streamlit UI to manage tickers", True),
+            ("Create registry database tables (instruments, index_constituents, ingestion_log)", True),
+            ("Build Streamlit Ticker Registry UI with add/toggle/seed", True),
+            ("CSV seed script for IN/CA/US markets (193 instruments)", True),
             ("Refactor Airflow DAG to use dynamic task mapping (expand)", True),
-            ("Log daily ingestions and index membership", True),
+            ("Weekly DAG: scrape S&P 500, NASDAQ-100, Nifty 50 constituents", True),
+            ("Log daily ingestions and auto-disable failed tickers", True),
         ],
-        "description": "Store tracked symbols in a database registry instead of a flat file. Use Airflow dynamic mapping for scalable parallel ingestion.",
+        "description": "Store tracked symbols in a database registry instead of a flat file. Use Airflow dynamic mapping for scalable parallel ingestion. Auto-discover index constituents via Wikipedia scraping.",
     },
 ]
 
@@ -198,6 +200,7 @@ QUICK_LINKS = [
     ("📄 Phase 5 Docs", "docs/PHASE_5_LLM_RAG.md"),
     ("⚡ Phase 6 Docs (Redis)", "docs/PHASE_6_REDIS.md"),
     ("❄️ Phase 7 Docs (Snowflake)", "docs/PHASE_7_SNOWFLAKE.md"),
+    ("📋 Phase 10 Docs (Registry)", "docs/PHASE_10_REGISTRY.md"),
 ]
 
 TECH_STACK = [

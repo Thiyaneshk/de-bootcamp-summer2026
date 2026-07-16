@@ -1,9 +1,0 @@
---- README.md
-+++ README.md
-@@ -19,6 +19,7 @@
- - **Phase 5:** Local LLM & RAG (Ollama, LangChain)
- - **Phase 6:** Distributed Caching (Redis)
- - **Phase 7:** Cloud Data Warehouse (Snowflake)
-+- **Phase 10:** Ticker Registry & Dynamic Airflow Task Mapping
-
- ## Getting Started

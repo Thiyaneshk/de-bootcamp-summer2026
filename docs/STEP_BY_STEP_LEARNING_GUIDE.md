@@ -111,7 +111,7 @@ The app has multiple pages:
 - Indicators: learn how technical indicators are conceptualized.
 - Analysis: review the analytical workflow.
 - Assistant Chat: test AI-powered questions over data.
-- Ticker Registry: manage tracked instruments.
+- Ticker Registry: **(Phase 10)** Learn how active symbols and index constituents are managed in a database.
 - Admin: inspect app-level control points.
 
 ### Step 3.3: Try the Stock Overview page
@@ -199,15 +199,19 @@ Try adding:
 Then click Save instrument.
 
 ### Step 6.3: Seed sample index membership
-Use the button to seed sample S&P 500 membership data.
+Use the "Seed from CSV" button in the sidebar.
+This will load around 193 instruments across IN, CA, and US markets (including index definitions).
 
-### Step 6.4: Learn what is being stored
+### Step 6.4: Explore Index Constituents
+Go to the "Index Membership" tab. You will see active symbols. The pipeline auto-discovers S&P 500, NASDAQ-100, and Nifty 50 constituents dynamically via the `resolve_index_membership` Airflow DAG.
+
+### Step 6.5: Learn what is being stored
 The registry stores:
-- instruments,
-- index memberships,
-- ingestion history.
+- instruments (active vs inactive),
+- index memberships (weights, dates),
+- ingestion history (success, skipped, failed).
 
-This is useful for understanding how the app moves from raw data to managed data pipelines.
+This database registry fully replaces the old `config/symbols.toml` file, bringing the app closer to a production-grade orchestration system.
 
 ---
 
@@ -278,9 +282,10 @@ Look for the DAG named etl_prices_dag.
 Click Run or Trigger DAG.
 
 ### What you should learn
-- Airflow orchestrates tasks,
-- tasks are dynamically expanded per symbol,
-- and the DAG validates that data exists in PostgreSQL.
+- Airflow orchestrates tasks.
+- In Phase 10, the daily DAG (`etl_prices_dag.py`) queries the active symbols from your database registry.
+- It uses **Dynamic Task Mapping** (`.expand()`) to fan-out and download each ticker in parallel!
+- The weekly DAG (`resolve_index_membership_dag.py`) automatically scrapes Wikipedia for index constituents and updates your registry.
 
 ---
 
@@ -381,19 +386,16 @@ The test suite is in [tests](../tests).
 
 ### Step 12.1: Run smoke tests first
 ```bash
-uv run pytest tests/test_smoke.py -q
+uv run python run_tests.py
 ```
-
-### Step 12.2: Run the full test suite
-```bash
-uv run pytest -q
-```
+This runs the full suite (14 tests) via `pytest` efficiently.
 
 ### What to learn
 - tests cover import paths,
 - configuration loading,
-- database access,
-- and chat-module compatibility.
+- database access (with local DuckDB roundtrips),
+- RAG chat module compatibility,
+- and registry seed validation.
 
 If a test fails, read the relevant module and the test file together before changing anything.
 

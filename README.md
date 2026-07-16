@@ -6,6 +6,9 @@ A phased, hands-on learning project that progressively builds a complete data en
 
 This is a **learning-first scaffold** designed to teach you modern data engineering concepts through practical implementation. Each phase builds on the previous one, so you can stop at any point and have a fully functional system.
 
+> **Note on Project Status:** See the [antigravity_status.md](antigravity_status.md) file for the most up-to-date snapshot of the project's architecture and completed tasks.
+> See [CHANGELOG.md](CHANGELOG.md) for the change history and project evolution.
+
 ### What You'll Learn
 
 - **Phase 1:** Streamlit UI + yfinance data loading (DuckDB local storage)
@@ -68,46 +71,56 @@ See **[SETUP_COMMANDS.md](SETUP_COMMANDS.md)** for complete Phase 1-7 setup.
 
 ## 📁 Project Structure
 
-```
+```text
 de-bootcamp-summer2026/
-├── app/                      # Phase 1: Streamlit UI
+├── app/                      # Streamlit UI & Core Logic
 │   ├── main.py               # Multi-page entry point
 │   ├── config.py             # Configuration loading
-│   ├── core/etl/prices.py    # yfinance wrapper
-│   ├── db/                   # Database abstraction (DuckDB/PostgreSQL)
-│   └── views/                # Streamlit pages (6 pages)
+│   ├── core/                   
+│   │   ├── etl/prices.py     # yfinance wrapper
+│   │   ├── rag/              # LLM assistant backend (Phase 5)
+│   │   └── cache/            # Redis integration (Phase 6)
+│   ├── db/                   # Database & Registry 
+│   │   ├── connection.py     # DuckDB/PostgreSQL router
+│   │   └── registry.py       # Phase 10: Ticker Registry
+│   └── views/                # Streamlit pages (8 pages)
 │
-├── airflow/                  # Phase 2: DAG orchestration
-│   └── dags/etl_prices_dag.py
+├── airflow/                  # Phase 2 & 10: DAG orchestration
+│   └── dags/
+│       ├── etl_prices_dag.py # Daily dynamic ETL mapping
+│       └── resolve_index_membership_dag.py # Weekly scraping
 │
 ├── dbt/                      # Phase 3: Data transformations
 │   ├── models/staging/       # Data cleaning layer
 │   └── models/marts/         # Analytics layer
 │
+├── data/                     # Local data & seeds
+│   ├── app.duckdb            # Local dev database
+│   └── ticker_registry_seed.csv # Phase 10: Default symbols
+│
 ├── config/
-│   └── symbols.toml          # Market symbols configuration
+│   └── symbols.toml          # Legacy market symbols (fallback)
 │
-├── scripts/                  # Utility scripts
-│   ├── refresh_data.py       # ETL CLI entry
-│   ├── init_db.py            # Database schema initialization
-│   └── init_ollama.sh        # LLM setup
+├── scripts/                  # Utility & setup scripts
+│   ├── refresh_data.py       # Manual ETL CLI entry
+│   ├── seed_registry.py      # Seed database with CSV
+│   └── init_db.py            # Database schema initialization
 │
-├── docs/                     # Phase-specific documentation
-│   ├── PHASE_1_STREAMLIT.md
-│   ├── PHASE_2_AIRFLOW_POSTGRES.md
-│   ├── PHASE_3_DBT.md
-│   ├── PHASE_4_ANALYTICS.md
-│   ├── PHASE_5_LLM_RAG.md
-│   ├── PHASE_6_REDIS.md
-│   └── PHASE_7_SNOWFLAKE.md
+├── docs/                     # Documentation & guides
+│   ├── STEP_BY_STEP_LEARNING_GUIDE.md
+│   └── PHASE_*_*.md          # Phase-specific guides
 │
-├── tests/                    # Test placeholders
-├── data/                     # Local data storage (Phase 1)
+├── tests/                    # Pytest suite
+│   └── ...
+│
 ├── Dockerfile               # Container definition
-├── docker-compose.yml       # Services: PostgreSQL, Ollama, Streamlit
+├── docker-compose.yml       # Services: PostgreSQL, Ollama, Streamlit, Redis
 ├── pyproject.toml           # Dependencies (phase-grouped)
 ├── ruff.toml               # Code linting config
-└── SETUP_COMMANDS.md       # All setup commands (phases 0-7)
+├── run_tests.py            # Test execution wrapper
+├── SETUP_COMMANDS.md       # All setup commands (phases 0-7)
+├── CHANGELOG.md            # Change history of the project
+└── antigravity_status.md   # Current architecture and status snapshot
 ```
 
 ---
@@ -177,6 +190,7 @@ de-bootcamp-summer2026/
 
 ## 📖 Documentation
 
+- **[docs/STEP_BY_STEP_LEARNING_GUIDE.md](docs/STEP_BY_STEP_LEARNING_GUIDE.md)** — Recommended syllabus for learning the app from the ground up
 - **[SETUP_COMMANDS.md](SETUP_COMMANDS.md)** — Every command from repo creation through Phase 5
 - **[docs/PHASE_1_STREAMLIT.md](docs/PHASE_1_STREAMLIT.md)** — yfinance API, DuckDB storage
 - **[docs/PHASE_2_AIRFLOW_POSTGRES.md](docs/PHASE_2_AIRFLOW_POSTGRES.md)** — DAG structure, schema design
@@ -186,6 +200,8 @@ de-bootcamp-summer2026/
 - **[docs/PHASE_6_REDIS.md](docs/PHASE_6_REDIS.md)** — Distributed caching with Redis
 - **[docs/PHASE_7_SNOWFLAKE.md](docs/PHASE_7_SNOWFLAKE.md)** — Cloud DW integration with Snowflake
 - **[docs/PHASE_10_REGISTRY.md](docs/PHASE_10_REGISTRY.md)** — Ticker Registry & Dynamic Airflow Tasks
+- **[antigravity_status.md](antigravity_status.md)** — Current system architecture & recent changes snapshot
+- **[CHANGELOG.md](CHANGELOG.md)** — Detailed history of project modifications
 
 ---
 
