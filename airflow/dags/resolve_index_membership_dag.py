@@ -12,8 +12,9 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
-from airflow import DAG
 from airflow.providers.standard.operators.python import PythonOperator
+
+from airflow import DAG
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +37,14 @@ def _scrape_sp500() -> list[dict]:
         name = str(row.get("Security", ""))
         sector = str(row.get("GICS Sector", ""))
         if sym:
-            constituents.append({
-                "stock_symbol": sym,
-                "name": name,
-                "sector": sector,
-                "weight": None,
-            })
+            constituents.append(
+                {
+                    "stock_symbol": sym,
+                    "name": name,
+                    "sector": sector,
+                    "weight": None,
+                }
+            )
     logger.info("Scraped %d S&P 500 constituents", len(constituents))
     return constituents
 
@@ -76,11 +79,13 @@ def _scrape_nasdaq100() -> list[dict]:
                     name = str(row[col]).strip()
                     break
             if sym and sym != "nan":
-                constituents.append({
-                    "stock_symbol": sym.replace(".", "-"),
-                    "name": name,
-                    "weight": None,
-                })
+                constituents.append(
+                    {
+                        "stock_symbol": sym.replace(".", "-"),
+                        "name": name,
+                        "weight": None,
+                    }
+                )
     logger.info("Scraped %d NASDAQ-100 constituents", len(constituents))
     return constituents
 
@@ -116,11 +121,13 @@ def _scrape_nifty50() -> list[dict]:
             if sym and sym != "nan":
                 # Append .NS suffix for NSE symbols
                 yf_sym = f"{sym}.NS" if not sym.endswith(".NS") else sym
-                constituents.append({
-                    "stock_symbol": yf_sym,
-                    "name": name,
-                    "weight": None,
-                })
+                constituents.append(
+                    {
+                        "stock_symbol": yf_sym,
+                        "name": name,
+                        "weight": None,
+                    }
+                )
     logger.info("Scraped %d Nifty 50 constituents", len(constituents))
     return constituents
 
@@ -178,7 +185,11 @@ def resolve_all_indices(**context) -> dict:
 
         except Exception as e:
             logger.error("❌ Failed to resolve %s: %s", index_symbol, e)
-            summary[index_symbol] = {"name": index_name, "status": "failed", "error": str(e)}
+            summary[index_symbol] = {
+                "name": index_name,
+                "status": "failed",
+                "error": str(e),
+            }
 
     return summary
 
@@ -205,7 +216,6 @@ with DAG(
     max_active_runs=1,
     tags=["registry", "index", "membership", "scraping"],
 ) as dag:
-
     PythonOperator(
         task_id="resolve_all_indices",
         python_callable=resolve_all_indices,

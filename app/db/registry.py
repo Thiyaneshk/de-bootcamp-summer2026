@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import duckdb
@@ -75,7 +75,9 @@ def init_registry_tables(connection: Any | None = None) -> None:
                 conn.execute(_ensure_schema_sql())
         return
 
-    if hasattr(connection, "connect") and not isinstance(connection, duckdb.DuckDBPyConnection):
+    if hasattr(connection, "connect") and not isinstance(
+        connection, duckdb.DuckDBPyConnection
+    ):
         with connection.begin() as conn:
             conn.execute(text(_ensure_schema_sql_postgres()))
         return
@@ -92,7 +94,7 @@ def add_instrument(
 ) -> dict[str, Any]:
     """Insert or update an instrument record."""
     init_registry_tables()
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     engine = _get_postgres_engine()
     if engine:
         with engine.begin() as conn:
@@ -160,9 +162,16 @@ def get_instruments(
             if instrument_type:
                 query += " WHERE instrument_type = :instrument_type"
             if active_only:
-                query += " WHERE is_active = TRUE" if not instrument_type else " AND is_active = TRUE"
+                query += (
+                    " WHERE is_active = TRUE"
+                    if not instrument_type
+                    else " AND is_active = TRUE"
+                )
             query += " ORDER BY symbol"
-            result = conn.execute(text(query), {"instrument_type": instrument_type} if instrument_type else {})
+            result = conn.execute(
+                text(query),
+                {"instrument_type": instrument_type} if instrument_type else {},
+            )
             rows = result.fetchall()
         engine.dispose()
         return [
@@ -177,7 +186,9 @@ def get_instruments(
         ]
 
     with get_duckdb_connection() as conn:
-        query = "SELECT symbol, name, instrument_type, exchange, is_active FROM instruments"
+        query = (
+            "SELECT symbol, name, instrument_type, exchange, is_active FROM instruments"
+        )
         clauses: list[str] = []
         if instrument_type:
             clauses.append("instrument_type = ?")
@@ -229,7 +240,9 @@ def get_active_symbols() -> list[str]:
     return [item["symbol"] for item in instruments if item.get("symbol")]
 
 
-def update_instrument_status_from_ingestion(symbol: str, status: str, rows_ingested: int) -> None:
+def update_instrument_status_from_ingestion(
+    symbol: str, status: str, rows_ingested: int
+) -> None:
     """Disable an instrument when ingestion is skipped or fails due to missing data."""
     if status in {"skipped", "failed"} or rows_ingested == 0:
         set_instrument_active(symbol, False)
@@ -237,7 +250,9 @@ def update_instrument_status_from_ingestion(symbol: str, status: str, rows_inges
         set_instrument_active(symbol, True)
 
 
-def upsert_index_constituents(index_symbol: str, constituents: list[dict[str, Any]]) -> None:
+def upsert_index_constituents(
+    index_symbol: str, constituents: list[dict[str, Any]]
+) -> None:
     """Store index membership rows for a given index symbol."""
     init_registry_tables()
     engine = _get_postgres_engine()
@@ -293,8 +308,8 @@ def log_ingestion(
 ) -> list[dict[str, Any]]:
     """Record an ingestion result and return the recent log entries."""
     init_registry_tables()
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-    completed = completed_at or datetime.now(timezone.utc)
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+    completed = completed_at or datetime.now(UTC)
     completed_str = completed.strftime("%Y-%m-%d %H:%M:%S")
     engine = _get_postgres_engine()
     if engine:

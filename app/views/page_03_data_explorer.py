@@ -30,7 +30,7 @@ def _duck_connect():
 def _table_exists(conn, table: str) -> bool:
     try:
         rows = conn.execute(
-            "SELECT count(*) FROM information_schema.tables " "WHERE table_name = ?",
+            "SELECT count(*) FROM information_schema.tables WHERE table_name = ?",
             [table],
         ).fetchone()
         return rows[0] > 0

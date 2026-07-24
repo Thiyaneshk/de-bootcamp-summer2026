@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 import duckdb
 
@@ -23,7 +22,9 @@ def test_registry_roundtrip_using_duckdb(tmp_path):
     with duckdb.connect(str(db_path)) as conn:
         init_registry_tables(conn)
 
-    add_instrument("AAPL", name="Apple Inc.", instrument_type="stock", exchange="NASDAQ")
+    add_instrument(
+        "AAPL", name="Apple Inc.", instrument_type="stock", exchange="NASDAQ"
+    )
     add_instrument("^GSPC", name="S&P 500", instrument_type="index", exchange="INDEX")
 
     instruments = get_instruments()
@@ -51,7 +52,13 @@ def test_ingestion_result_marks_instrument_inactive_when_missing_data(tmp_path):
     with duckdb.connect(str(db_path)) as conn:
         init_registry_tables(conn)
 
-    add_instrument("MSFT", name="Microsoft", instrument_type="stock", exchange="NASDAQ", is_active=True)
+    add_instrument(
+        "MSFT",
+        name="Microsoft",
+        instrument_type="stock",
+        exchange="NASDAQ",
+        is_active=True,
+    )
 
     update_instrument_status_from_ingestion("MSFT", "skipped", 0)
     active_symbols = get_active_symbols()

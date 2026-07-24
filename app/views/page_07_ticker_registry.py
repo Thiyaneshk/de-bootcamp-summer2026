@@ -15,9 +15,7 @@ from app.db.registry import (
     get_active_symbols,
     get_instruments,
     init_registry_tables,
-    log_ingestion,
     set_instrument_active,
-    upsert_index_constituents,
 )
 
 
@@ -51,17 +49,30 @@ def main() -> None:
             itype = st.selectbox("Type", ["stock", "etf", "index", "crypto"])
             exchange = st.text_input("Exchange", placeholder="NASDAQ")
             is_active = st.checkbox("Active", value=True)
-            submitted = st.form_submit_button("💾 Save", type="primary", use_container_width=True)
+            submitted = st.form_submit_button(
+                "💾 Save", type="primary", use_container_width=True
+            )
             if submitted and sym:
-                add_instrument(sym, name=name, instrument_type=itype, exchange=exchange, is_active=is_active)
+                add_instrument(
+                    sym,
+                    name=name,
+                    instrument_type=itype,
+                    exchange=exchange,
+                    is_active=is_active,
+                )
                 st.success(f"✅ Saved **{sym}**")
                 st.rerun()
 
         st.divider()
         st.subheader("📥 Seed from CSV")
-        if st.button("🌱 Load seed data", use_container_width=True, help="Loads ~193 instruments from data/ticker_registry_seed.csv"):
+        if st.button(
+            "🌱 Load seed data",
+            use_container_width=True,
+            help="Loads ~193 instruments from data/ticker_registry_seed.csv",
+        ):
             try:
                 from scripts.seed_registry import seed
+
                 result = seed()
                 st.success(f"Seeded {result['inserted']}/{result['total']} instruments")
                 st.rerun()
@@ -114,9 +125,14 @@ def main() -> None:
             with toggle_col1:
                 sym_to_toggle = st.selectbox(
                     "Select symbol to toggle",
-                    [i["symbol"] for i in get_instruments(
-                        instrument_type=None if type_filter == "all" else type_filter
-                    )],
+                    [
+                        i["symbol"]
+                        for i in get_instruments(
+                            instrument_type=None
+                            if type_filter == "all"
+                            else type_filter
+                        )
+                    ],
                     label_visibility="collapsed",
                 )
             with toggle_col2:
@@ -134,7 +150,9 @@ def main() -> None:
                         set_instrument_active(i["symbol"], True)
                     st.rerun()
         else:
-            st.info("No instruments registered yet. Use the sidebar to add one or seed from CSV.")
+            st.info(
+                "No instruments registered yet. Use the sidebar to add one or seed from CSV."
+            )
 
     # ── Tab 2: Index Membership ───────────────────────────────────────────────
     with tab_membership:
@@ -159,9 +177,10 @@ def main() -> None:
 
         # Read-only: query existing logs without writing
         try:
+            from sqlalchemy import text as sa_text
+
             from app.db.connection import get_duckdb_connection
             from app.db.registry import _get_postgres_engine
-            from sqlalchemy import text as sa_text
 
             engine = _get_postgres_engine()
             if engine:
@@ -177,11 +196,20 @@ def main() -> None:
                 if rows:
                     log_df = pd.DataFrame(
                         rows,
-                        columns=["Symbol", "Type", "Status", "Rows", "Started", "Completed"],
+                        columns=[
+                            "Symbol",
+                            "Type",
+                            "Status",
+                            "Rows",
+                            "Started",
+                            "Completed",
+                        ],
                     )
                     st.dataframe(log_df, use_container_width=True, hide_index=True)
                 else:
-                    st.info("No ingestion logs yet. Run the Airflow ETL DAG to populate this.")
+                    st.info(
+                        "No ingestion logs yet. Run the Airflow ETL DAG to populate this."
+                    )
             else:
                 with get_duckdb_connection() as conn:
                     try:
@@ -193,12 +221,25 @@ def main() -> None:
                         if rows:
                             log_df = pd.DataFrame(
                                 rows,
-                                columns=["Symbol", "Type", "Status", "Rows", "Started", "Completed"],
+                                columns=[
+                                    "Symbol",
+                                    "Type",
+                                    "Status",
+                                    "Rows",
+                                    "Started",
+                                    "Completed",
+                                ],
                             )
-                            st.dataframe(log_df, use_container_width=True, hide_index=True)
+                            st.dataframe(
+                                log_df, use_container_width=True, hide_index=True
+                            )
                         else:
-                            st.info("No ingestion logs yet. Run the Airflow ETL DAG to populate this.")
+                            st.info(
+                                "No ingestion logs yet. Run the Airflow ETL DAG to populate this."
+                            )
                     except Exception:
-                        st.info("Ingestion log table not initialized yet. Run the seed or ETL DAG first.")
+                        st.info(
+                            "Ingestion log table not initialized yet. Run the seed or ETL DAG first."
+                        )
         except Exception as e:
             st.warning(f"Could not read ingestion log: {e}")

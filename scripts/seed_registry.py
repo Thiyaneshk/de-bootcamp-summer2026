@@ -39,7 +39,9 @@ def seed() -> dict[str, int]:
         try:
             add_instrument(**inst)
             inserted += 1
-            print(f"Added {inst['symbol']} - {inst['name']} ({inst['instrument_type']})")
+            print(
+                f"Added {inst['symbol']} - {inst['name']} ({inst['instrument_type']})"
+            )
         except Exception as exc:  # pragma: no cover - defensive logging
             errors += 1
             print(f"Error adding {inst['symbol']}: {exc}")

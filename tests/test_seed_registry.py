@@ -15,5 +15,10 @@ def test_seed_inserts_expected_instruments():
 
     assert result["inserted"] == len(captured)
     assert result["inserted"] > 0
-    assert any(item["symbol"] == "^NSEI" and item["instrument_type"] == "index" for item in captured)
-    assert any(item["symbol"] == "AAPL" and item["exchange"] == "NASDAQ" for item in captured)
+    assert any(
+        item["symbol"] == "^NSEI" and item["instrument_type"] == "index"
+        for item in captured
+    )
+    assert any(
+        item["symbol"] == "AAPL" and item["exchange"] == "NASDAQ" for item in captured
+    )

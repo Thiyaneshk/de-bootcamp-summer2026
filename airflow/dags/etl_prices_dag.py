@@ -13,9 +13,6 @@ Schedule: Daily at 08:00 UTC  (cron: '0 8 * * *')
 """
 
 import logging
-def list_wrap(x):
-    return [x]
-
 import os
 from datetime import datetime, timedelta
 
@@ -25,6 +22,11 @@ from airflow.providers.standard.operators.python import PythonOperator
 from airflow import DAG
 
 logger = logging.getLogger(__name__)
+
+
+def list_wrap(x):
+    return [x]
+
 
 def get_active_symbols_task(**context) -> list[str]:
     """
@@ -47,12 +49,13 @@ def download_one_by_one(symbol: str, **context) -> dict:
     Download from yfinance -> store to DuckDB -> push to PostgreSQL.
     Log result to registry.ingestion_log.
     """
-    from app.core.etl.prices import load_prices_daily
-    from app.db.connection import get_duckdb_connection, get_db_engine
-    from app.db.utils import create_prices_table, insert_prices
-    from app.db.registry import log_ingestion, update_instrument_status_from_ingestion
-    from sqlalchemy import text
     import pandas as pd
+    from sqlalchemy import text
+
+    from app.core.etl.prices import load_prices_daily
+    from app.db.connection import get_db_engine, get_duckdb_connection
+    from app.db.registry import log_ingestion, update_instrument_status_from_ingestion
+    from app.db.utils import create_prices_table, insert_prices
 
     logger.info("Processing symbol: %s", symbol)
     rows_ingested = 0
@@ -89,7 +92,8 @@ def download_one_by_one(symbol: str, **context) -> dict:
         if postgres_url:
             with get_db_engine() as engine:
                 with engine.begin() as conn:
-                    conn.execute(text("""
+                    conn.execute(
+                        text("""
                 CREATE TABLE IF NOT EXISTS prices (
                     symbol    VARCHAR(20)  NOT NULL,
                     timestamp TIMESTAMPTZ NOT NULL,
@@ -100,17 +104,20 @@ def download_one_by_one(symbol: str, **context) -> dict:
                     volume    BIGINT,
                     PRIMARY KEY (symbol, timestamp)
                 )
-                    """))
+                    """)
+                    )
 
                     df_tmp = pd.DataFrame(records)
 
                     import re
-                    clean_sym = re.sub(r'[^a-zA-Z0-9_]', '_', symbol).lower()
+
+                    clean_sym = re.sub(r"[^a-zA-Z0-9_]", "_", symbol).lower()
                     table_name = f"prices_etl_tmp_{clean_sym}"
 
                     df_tmp.to_sql(table_name, conn, if_exists="replace", index=False)
 
-                    conn.execute(text(f"""
+                    conn.execute(
+                        text(f"""
                 INSERT INTO prices (symbol, timestamp, open, high, low, close, volume)
                 SELECT symbol, timestamp::timestamptz, open, high, low, close, volume
                 FROM "{table_name}"
@@ -120,7 +127,8 @@ def download_one_by_one(symbol: str, **context) -> dict:
                     low    = EXCLUDED.low,
                     close  = EXCLUDED.close,
                     volume = EXCLUDED.volume
-                    """))
+                    """)
+                    )
                     conn.execute(text(f'DROP TABLE IF EXISTS "{table_name}"'))
 
     except Exception as e:
@@ -142,7 +150,8 @@ def validate_postgres(**context) -> dict:
     from sqlalchemy import create_engine, text
 
     symbols = context["ti"].xcom_pull(task_ids="get_active_symbols")
-    if not symbols: return {"skipped": True}
+    if not symbols:
+        return {"skipped": True}
 
     engine = create_engine(postgres_url, pool_pre_ping=True)
 
@@ -202,7 +211,6 @@ with DAG(
     max_active_runs=1,
     tags=["price-data", "yfinance", "duckdb", "postgres"],
 ) as dag:
-
     t1_active_symbols = PythonOperator(
         task_id="get_active_symbols",
         python_callable=get_active_symbols_task,

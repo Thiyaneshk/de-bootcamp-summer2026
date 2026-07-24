@@ -173,7 +173,10 @@ PHASES = [
         "nav_page": "Ticker Registry",
         "status": "completed",
         "tasks": [
-            ("Create registry database tables (instruments, index_constituents, ingestion_log)", True),
+            (
+                "Create registry database tables (instruments, index_constituents, ingestion_log)",
+                True,
+            ),
             ("Build Streamlit Ticker Registry UI with add/toggle/seed", True),
             ("CSV seed script for IN/CA/US markets (193 instruments)", True),
             ("Refactor Airflow DAG to use dynamic task mapping (expand)", True),
@@ -244,29 +247,29 @@ def _phase_card(phase: dict) -> None:
         st.markdown(
             f"""
             <div style="
-                background:linear-gradient(135deg,{meta['bg']} 0%,#111827 100%);
-                border:1px solid {meta['color']}44;
-                border-left:4px solid {meta['color']};
+                background:linear-gradient(135deg,{meta["bg"]} 0%,#111827 100%);
+                border:1px solid {meta["color"]}44;
+                border-left:4px solid {meta["color"]};
                 border-radius:12px;
                 padding:18px 20px 14px;
                 margin-bottom:12px;
             ">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
                     <span style="font-size:1.1rem;font-weight:700;color:#f1f5f9">
-                        {phase['icon']} {phase['title']}
+                        {phase["icon"]} {phase["title"]}
                     </span>
                     <span style="
-                        background:{meta['color']}22;
-                        color:{meta['color']};
-                        border:1px solid {meta['color']}55;
+                        background:{meta["color"]}22;
+                        color:{meta["color"]};
+                        border:1px solid {meta["color"]}55;
                         border-radius:20px;padding:2px 10px;font-size:0.78rem;font-weight:600
-                    ">{meta['label']}</span>
+                    ">{meta["label"]}</span>
                 </div>
-                <p style="color:#94a3b8;margin:6px 0 10px;font-size:0.87rem">{phase['description']}</p>
+                <p style="color:#94a3b8;margin:6px 0 10px;font-size:0.87rem">{phase["description"]}</p>
                 <div style="color:#64748b;font-size:0.8rem;margin-bottom:8px">
-                    🕐 {phase['time']} &nbsp;|&nbsp; 🛠 {phase['tech']}
+                    🕐 {phase["time"]} &nbsp;|&nbsp; 🛠 {phase["tech"]}
                 </div>
-                {_progress_bar(done, total, meta['color'])}
+                {_progress_bar(done, total, meta["color"])}
             </div>
             """,
             unsafe_allow_html=True,
