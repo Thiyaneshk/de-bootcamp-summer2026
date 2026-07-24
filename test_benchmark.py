@@ -1,18 +1,21 @@
 import time
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 # Create dummy data
 np.random.seed(42)
 n = 100000
-df = pd.DataFrame({
-    "timestamp": pd.date_range("2020-01-01", periods=n, freq="D"),
-    "close": np.random.randn(n).cumsum() + 100,
-    "sma_20": np.random.randn(n).cumsum() + 100,
-    "sma_50": np.random.randn(n).cumsum() + 100,
-    "ema_50": np.random.randn(n).cumsum() + 100,
-    "ema_200": np.random.randn(n).cumsum() + 100,
-})
+df = pd.DataFrame(
+    {
+        "timestamp": pd.date_range("2020-01-01", periods=n, freq="D"),
+        "close": np.random.randn(n).cumsum() + 100,
+        "sma_20": np.random.randn(n).cumsum() + 100,
+        "sma_50": np.random.randn(n).cumsum() + 100,
+        "ema_50": np.random.randn(n).cumsum() + 100,
+        "ema_200": np.random.randn(n).cumsum() + 100,
+    }
+)
 
 
 def detect_crossovers_original(df: pd.DataFrame) -> list[dict]:
@@ -105,16 +108,36 @@ def detect_crossovers_optimized(df: pd.DataFrame) -> list[dict]:
     df["ema_diff_prev"] = df["ema_diff"].shift(1)
 
     # Boolean indexing for SMA Golden Cross
-    sma_golden_mask = (df["sma_diff"] > 0) & (df["sma_diff_prev"] <= 0) & df["sma_diff"].notna() & df["sma_diff_prev"].notna()
+    sma_golden_mask = (
+        (df["sma_diff"] > 0)
+        & (df["sma_diff_prev"] <= 0)
+        & df["sma_diff"].notna()
+        & df["sma_diff_prev"].notna()
+    )
 
     # Boolean indexing for SMA Death Cross
-    sma_death_mask = (df["sma_diff"] < 0) & (df["sma_diff_prev"] >= 0) & df["sma_diff"].notna() & df["sma_diff_prev"].notna()
+    sma_death_mask = (
+        (df["sma_diff"] < 0)
+        & (df["sma_diff_prev"] >= 0)
+        & df["sma_diff"].notna()
+        & df["sma_diff_prev"].notna()
+    )
 
     # Boolean indexing for EMA Golden Cross
-    ema_golden_mask = (df["ema_diff"] > 0) & (df["ema_diff_prev"] <= 0) & df["ema_diff"].notna() & df["ema_diff_prev"].notna()
+    ema_golden_mask = (
+        (df["ema_diff"] > 0)
+        & (df["ema_diff_prev"] <= 0)
+        & df["ema_diff"].notna()
+        & df["ema_diff_prev"].notna()
+    )
 
     # Boolean indexing for EMA Death Cross
-    ema_death_mask = (df["ema_diff"] < 0) & (df["ema_diff_prev"] >= 0) & df["ema_diff"].notna() & df["ema_diff_prev"].notna()
+    ema_death_mask = (
+        (df["ema_diff"] < 0)
+        & (df["ema_diff_prev"] >= 0)
+        & df["ema_diff"].notna()
+        & df["ema_diff_prev"].notna()
+    )
 
     # Create event records from vectorized boolean masks
     for idx, row in df[sma_golden_mask].iterrows():

@@ -84,9 +84,9 @@ def check_postgres_status(pg_url: str) -> dict:
                     ).scalar()
                     status["tables"][f"{schema}.{table}"] = f"{count_res:,} rows"
                 except Exception:
-                    status["tables"][
-                        f"{schema}.{table}"
-                    ] = "❌ Table missing/unpopulated"
+                    status["tables"][f"{schema}.{table}"] = (
+                        "❌ Table missing/unpopulated"
+                    )
         engine.dispose()
     except Exception as e:
         status["error"] = str(e)
@@ -246,7 +246,9 @@ def main():
                     default=[],
                 )
 
-                if st.button("♻️ Reactivate Selected", disabled=not selected_to_reactivate):
+                if st.button(
+                    "♻️ Reactivate Selected", disabled=not selected_to_reactivate
+                ):
                     for symbol in selected_to_reactivate:
                         set_instrument_active(symbol, True)
                     st.success(f"Reactivated {len(selected_to_reactivate)} ticker(s).")

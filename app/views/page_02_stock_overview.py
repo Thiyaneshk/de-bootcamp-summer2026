@@ -7,8 +7,8 @@ Real-time stock data viewer with charts.
 from datetime import date, timedelta
 
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from app.core.etl.prices import load_prices_daily
 
@@ -87,7 +87,9 @@ def main():
         latest = df.iloc[-1]
         earliest = df.iloc[0]
         price_change = latest["Close"] - earliest["Close"]
-        pct_change = (price_change / earliest["Close"]) * 100 if earliest["Close"] else 0
+        pct_change = (
+            (price_change / earliest["Close"]) * 100 if earliest["Close"] else 0
+        )
 
         k1, k2, k3, k4 = st.columns(4)
         k1.metric("Latest Close", f"${latest['Close']:.2f}")
@@ -126,8 +128,7 @@ def main():
 
         # Volume bars colored by price direction
         colors = [
-            "#10b981" if c >= o else "#ef4444"
-            for c, o in zip(df["Close"], df["Open"])
+            "#10b981" if c >= o else "#ef4444" for c, o in zip(df["Close"], df["Open"])
         ]
         fig.add_trace(
             go.Bar(

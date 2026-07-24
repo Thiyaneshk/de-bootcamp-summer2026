@@ -7,6 +7,7 @@ from functools import wraps
 
 try:
     import redis
+
     _redis_available = True
 except Exception:  # pragma: no cover - fallback when package not installed
     redis = None
@@ -14,10 +15,13 @@ except Exception:  # pragma: no cover - fallback when package not installed
 
 _client = None
 
+
 def get_redis_client():
     """Return a Redis client or raise if redis package is unavailable."""
     if not _redis_available:
-        raise RuntimeError("redis package is not installed; install with 'pip install redis'")
+        raise RuntimeError(
+            "redis package is not installed; install with 'pip install redis'"
+        )
     global _client
     if _client is None:
         _client = redis.Redis(
@@ -34,9 +38,11 @@ def redis_cache(ttl: int = 300, prefix: str = "bootcamp"):
 
     def decorator(func):
         if not _redis_available:
+
             @wraps(func)
             def passthrough(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return passthrough
 
         @wraps(func)
